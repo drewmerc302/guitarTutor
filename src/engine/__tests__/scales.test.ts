@@ -1,0 +1,90 @@
+// src/engine/__tests__/scales.test.ts
+import { SCALE_TYPES, MODE_NAMES, computeScalePositions, applyModeRotation, ScalePosition } from '../scales';
+
+describe('SCALE_TYPES', () => {
+  test('Major scale is [0,2,4,5,7,9,11]', () => {
+    expect(SCALE_TYPES['Major']).toEqual([0,2,4,5,7,9,11]);
+  });
+  test('Minor Pentatonic is [0,3,5,7,10]', () => {
+    expect(SCALE_TYPES['Minor Pentatonic']).toEqual([0,3,5,7,10]);
+  });
+  test('Blues scale is [0,3,5,6,7,10]', () => {
+    expect(SCALE_TYPES['Blues']).toEqual([0,3,5,6,7,10]);
+  });
+});
+
+describe('MODE_NAMES', () => {
+  test('has 7 modes in correct order', () => {
+    expect(MODE_NAMES).toEqual(['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian','Locrian']);
+  });
+});
+
+describe('applyModeRotation', () => {
+  test('mode 0 (Ionian) returns original intervals', () => {
+    const result = applyModeRotation([0,2,4,5,7,9,11], 0);
+    expect(result).toEqual([0,2,4,5,7,9,11]);
+  });
+
+  test('mode 1 (Dorian) rotates correctly', () => {
+    const result = applyModeRotation([0,2,4,5,7,9,11], 1);
+    expect(result).toEqual([0,2,3,5,7,9,10]);
+  });
+
+  test('mode 5 (Aeolian) equals natural minor', () => {
+    const result = applyModeRotation([0,2,4,5,7,9,11], 5);
+    expect(result).toEqual([0,2,3,5,7,8,10]);
+  });
+});
+
+describe('computeScalePositions', () => {
+  test('returns 5 positions for C major', () => {
+    const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
+    expect(positions).toHaveLength(5);
+  });
+
+  test('each position has label, fretStart, fretEnd, and notes', () => {
+    const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
+    for (const pos of positions) {
+      expect(pos.label).toMatch(/^Box \d+$/);
+      expect(typeof pos.fretStart).toBe('number');
+      expect(typeof pos.fretEnd).toBe('number');
+      expect(pos.fretEnd).toBeGreaterThan(pos.fretStart);
+      expect(pos.notes.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('positions span 4-5 frets each', () => {
+    const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
+    for (const pos of positions) {
+      expect(pos.fretEnd - pos.fretStart).toBeLessThanOrEqual(5);
+      expect(pos.fretEnd - pos.fretStart).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  test('notes only contain scale tones', () => {
+    const intervals = [0,2,4,5,7,9,11];
+    const intervalSet = new Set(intervals);
+    const positions = computeScalePositions(0, intervals);
+    for (const pos of positions) {
+      for (const note of pos.notes) {
+        expect(intervalSet.has(note.interval)).toBe(true);
+      }
+    }
+  });
+
+  test('notes have finger assignments', () => {
+    const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
+    for (const pos of positions) {
+      for (const note of pos.notes) {
+        expect(note.finger).not.toBeNull();
+      }
+    }
+  });
+
+  test('works for all 12 roots', () => {
+    for (let root = 0; root < 12; root++) {
+      const positions = computeScalePositions(root, [0,2,4,5,7,9,11]);
+      expect(positions.length).toBe(5);
+    }
+  });
+});
