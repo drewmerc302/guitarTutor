@@ -28,5 +28,11 @@
     "ts-jest": "^29.4.6",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleFileExtensions": ["ts", "tsx", "js", "jsx"],
+    "testMatch": ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"]
+  }
 }
