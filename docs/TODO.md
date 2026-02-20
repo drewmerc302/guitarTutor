@@ -36,6 +36,27 @@
 
 ---
 
+## P0 — Pentatonic Equator Mode (Co-design with Claude)
+
+### Add Pentatonic Equator view to the Scales tab
+
+**What:** Implement John Mayer's "Pentatonic Equator" approach as an alternative
+position view alongside the standard Box 1–5 system on the Scales tab.
+
+**Background:** This conversation introduced the idea but the method details need
+to be fleshed out with the user before implementation. Resume this conversation
+to describe the Pentatonic Equator concept, then design and build the feature.
+
+**Design questions to resolve (start here):**
+- How does the Equator system divide/label positions differently from standard boxes?
+- Should it replace the box picker UI or sit alongside it as a toggle (e.g. "Boxes / Equator")?
+- Does it apply only to Minor Pentatonic, or Major Pent / Blues as well?
+- How should the fretboard highlight or annotate the equator concept visually?
+
+**Status:** Not started — needs user to describe the method, then brainstorm session
+
+---
+
 ## P0 — Visual Overhaul (Co-design with Claude)
 
 ### Visual design brainstorming and prototyping
