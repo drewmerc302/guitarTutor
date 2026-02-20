@@ -93,8 +93,9 @@ function ChordDiagramInner({ voicing, root }: ChordDiagramProps) {
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
       {fretOffset > 0 && (
         <SvgText
-          x={padL + gridW} y={padT - 10}
-          fill={theme.textSecondary} fontSize={8}
+          x={padL + gridW - 6} y={padT - 10}
+          fill={theme.textSecondary} fontSize={9}
+          fontWeight="700"
           textAnchor="end">
           {fretOffset + 1}fr
         </SvgText>

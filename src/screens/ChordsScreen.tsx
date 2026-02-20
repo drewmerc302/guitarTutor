@@ -74,15 +74,6 @@ export function ChordsScreen() {
     return set;
   }, [activeVoicing]);
 
-  // All chord-tone positions on the fretboard, used so every chord tone is fully
-  // lit (not dimmed) regardless of which voicing is active (fixes 7th/Sus greyout).
-  const allChordToneSet = useMemo(() => {
-    const set = new Set<string>();
-    for (const n of allNotes) {
-      set.add(`${n.string}-${n.fret}`);
-    }
-    return set;
-  }, [allNotes]);
 
   // --- Chord B (compare mode) ---
   const intervalsB = CHORD_TYPES[typeB];
@@ -270,13 +261,17 @@ export function ChordsScreen() {
           </View>
         )}
 
+        {!compareMode && (
+          <Text style={[styles.voicingHint, { color: theme.textMuted }]}>
+            Tap a root to change voicings
+          </Text>
+        )}
         <View style={styles.neckContainer}>
           <FretboardViewer
             notes={compareMode ? compareNotes : displayNotes}
             displayMode={display as 'finger' | 'interval' | 'note'}
             activeVoicing={compareActiveVoicingSet}
             hasVoicings={true}
-            activeNoteSet={compareMode ? undefined : allChordToneSet}
             onNotePress={compareMode ? undefined : handleNotePress}
             noteColorOverrides={compareMode ? noteColorOverrides : undefined}
             barreFret={compareMode ? null : activeBarreFret}
@@ -346,9 +341,16 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 12,
   },
+  voicingHint: {
+    fontSize: 11,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 4,
+  },
   neckContainer: {
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 8,
   },
   voicingLabel: {
     fontSize: 14,
