@@ -28,7 +28,10 @@ export function ProgressionsScreen() {
 
   const getVoicing = (chordRoot: number, quality: string): ChordVoicing | null => {
     const voicings = getChordVoicings(chordRoot, quality);
-    return voicings.length > 0 ? voicings[0] : null;
+    if (voicings.length === 0) return null;
+    const minFret = (v: ChordVoicing) =>
+      Math.min(...v.filter(n => n.f >= 0).map(n => n.f));
+    return voicings.reduce((best, v) => minFret(v) < minFret(best) ? v : best);
   };
 
   const renderCircleOfFifths = () => {

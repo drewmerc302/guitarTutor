@@ -98,6 +98,20 @@ describe('ProgressionsScreen', () => {
     expect(json).toContain('D');
   });
 
+  test('progression display uses open-position voicing for C major I chord', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Tap the I chord button — C major in key of C (default root=0)
+    const allTouchables = tree.root.findAllByType('TouchableOpacity');
+    const chordCards = allTouchables.filter((el: any) => el.props.accessibilityLabel == null);
+    act(() => { chordCards[0].props.onPress(); });
+
+    const json = JSON.stringify(tree.toJSON());
+    // Open C shape has open strings → ChordDiagram renders ○ for them
+    expect(json).toContain('○');
+  });
+
   test('tapping a circle note clears active chord previews', () => {
     // theme.accent = '#d4a04a', theme.textMuted = '#5c5a55' (from darkTheme in jest mock)
     const ACCENT = '#d4a04a';
