@@ -38,6 +38,11 @@ export function ProgressionsScreen() {
     const cx = 150, cy = 150, r = 100;
     const notes = CIRCLE_OF_FIFTHS;
 
+    const diatonicMap: Record<number, { numeral: string; quality: string }> = {};
+    for (const chord of diatonicChords) {
+      diatonicMap[chord.root] = { numeral: chord.numeral, quality: chord.quality };
+    }
+
     return (
       <Svg width={300} height={300} viewBox="0 0 300 300">
         <Circle cx={cx} cy={cy} r={r} fill="none" stroke={theme.border} strokeWidth={1} />
@@ -45,7 +50,13 @@ export function ProgressionsScreen() {
           const angle = (i * 30 - 90) * (Math.PI / 180);
           const x = cx + r * Math.cos(angle);
           const y = cy + r * Math.sin(angle);
-          const isActive = note === root;
+          const isSelectedKey = note === root;
+          const diatonic = diatonicMap[note];
+          const fillColor = diatonic
+            ? getChordQualityColor(diatonic.quality, isDark)
+            : theme.bgTertiary;
+          const textColor = diatonic ? '#fff' : theme.textPrimary;
+
           return (
             <G
               key={i}
@@ -57,21 +68,34 @@ export function ProgressionsScreen() {
                 cx={x}
                 cy={y}
                 r={15}
-                fill={isActive ? theme.accent : theme.bgTertiary}
-                stroke={theme.border}
-                strokeWidth={1}
+                fill={fillColor}
+                stroke={isSelectedKey ? '#fff' : theme.border}
+                strokeWidth={isSelectedKey ? 2 : 1}
               />
               <SvgText
                 x={x}
-                y={y}
-                fill={isActive ? theme.bgPrimary : theme.textPrimary}
-                fontSize={12}
+                y={diatonic ? y - 4 : y}
+                fill={textColor}
+                fontSize={diatonic ? 9 : 11}
                 fontWeight="600"
                 textAnchor="middle"
                 alignmentBaseline="central"
               >
                 {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[note]}
               </SvgText>
+              {diatonic && (
+                <SvgText
+                  x={x}
+                  y={y + 5}
+                  fill={textColor}
+                  fontSize={7}
+                  fontWeight="600"
+                  textAnchor="middle"
+                  alignmentBaseline="central"
+                >
+                  {diatonic.numeral}
+                </SvgText>
+              )}
             </G>
           );
         })}

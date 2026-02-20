@@ -112,6 +112,31 @@ describe('ProgressionsScreen', () => {
     expect(json).toContain('○');
   });
 
+  test('circle of fifths fills diatonic notes with quality colors', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    // In C major: I/IV/V are Major (#c8962a), ii/iii/vi Minor (#3a7bd5), vii° Dim (#c0392b)
+    expect(json).toContain('"fill":"#c8962a"');
+    expect(json).toContain('"fill":"#3a7bd5"');
+    expect(json).toContain('"fill":"#c0392b"');
+  });
+
+  test('circle of fifths shows roman numerals for diatonic notes', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('vii°');
+  });
+
+  test('selected key circle has white stroke ring', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    // The selected root note (C by default) gets stroke="#fff" strokeWidth=2
+    expect(json).toContain('"stroke":"#fff"');
+  });
+
   test('tapping a circle note clears active chord previews', () => {
     // theme.accent = '#d4a04a', theme.textMuted = '#5c5a55' (from darkTheme in jest mock)
     const ACCENT = '#d4a04a';
