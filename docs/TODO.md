@@ -36,6 +36,29 @@
 
 ---
 
+## P0 — Visual Overhaul (Co-design with Claude)
+
+### Visual design brainstorming and prototyping
+
+**What:** The current UI is functional but lacks cohesion. Key pain points:
+- Controls are inconsistent in size, orientation, and density across tabs (some are horizontal scrolling lists, some vertical, button sizes vary within and between tabs)
+- Advanced settings like "Mode" are presented at the same visual weight as primary controls, adding clutter for average users
+- No clear visual hierarchy or consistent spacing/color language across screens
+- Opportunity to introduce progressive disclosure (collapse/expand advanced settings like Modes) to serve both casual and power users
+
+**Goal:** Explore UI prototypes collaboratively — brainstorm layouts, try multiple approaches, and converge on a professional, cohesive visual design before implementing across all tabs.
+
+**Approach:** Co-work with Claude using the brainstorming skill to explore options. Consider:
+- Unified control style (pill selectors vs segmented controls vs cards)
+- Collapsible "Advanced" sections for Modes and other power-user settings
+- Consistent spacing grid and button sizing across all 5 tabs
+- Whether settings (flats, left-hand, capo) belong in a dedicated Settings screen vs the header
+- Interactive HTML prototypes to preview layout options before committing to code
+
+**Status:** Not started — needs brainstorming session
+
+---
+
 ## P1 — High Value Improvements
 
 *(All P1 items complete — see Recently Fixed above)*
