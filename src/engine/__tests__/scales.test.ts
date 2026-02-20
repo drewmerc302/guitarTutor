@@ -41,7 +41,7 @@ describe('computeScalePositions', () => {
     // C major: low E (open=4), C=0, first fret: (4+8)%12=0. Root at fret 8.
     // With TOTAL_FRETS=15, boxes fit from fret 8 onward within the neck.
     const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
-    expect(positions.length).toBeGreaterThanOrEqual(1);
+    expect(positions).toHaveLength(4);
     expect(positions[0].fretStart).toBe(8);
   });
 
@@ -56,11 +56,10 @@ describe('computeScalePositions', () => {
     }
   });
 
-  test('positions span 4-5 frets each', () => {
-    const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
+  test('each box spans exactly 3 frets (fretEnd - fretStart === 3)', () => {
+    const positions = computeScalePositions(9, [0, 3, 5, 7, 10]);
     for (const pos of positions) {
-      expect(pos.fretEnd - pos.fretStart).toBeLessThanOrEqual(5);
-      expect(pos.fretEnd - pos.fretStart).toBeGreaterThanOrEqual(3);
+      expect(pos.fretEnd - pos.fretStart).toBe(3);
     }
   });
 
@@ -87,7 +86,7 @@ describe('computeScalePositions', () => {
   test('works for all 12 roots', () => {
     for (let root = 0; root < 12; root++) {
       const positions = computeScalePositions(root, [0,2,4,5,7,9,11]);
-      expect(positions.length).toBeGreaterThanOrEqual(1);
+      expect(positions.length).toBeGreaterThanOrEqual(3);
     }
   });
 
