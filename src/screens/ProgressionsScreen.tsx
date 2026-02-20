@@ -4,37 +4,31 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line, Text as SvgText, G } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeContext';
-import { NotePicker, ChordPreview } from '../components';
+import { getChordQualityColor } from '../theme/colors';
+import { NotePicker, ChordDiagram } from '../components';
 import { getDiatonicChords, CIRCLE_OF_FIFTHS } from '../engine/progressions';
-import { generateBarreVoicings, generateMinorBarreVoicings, ChordVoicing } from '../engine/chords';
-import { NOTE_NAMES } from '../engine/notes';
+import { getChordVoicings, ChordVoicing, CHORD_TYPES } from '../engine/chords';
+import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
+import { useFavorites } from '../hooks/useFavorites';
 
 export function ProgressionsScreen() {
-  const { theme } = useTheme();
+  const { theme, useFlats, isDark } = useTheme();
+  const { addFavorite, isFavorite } = useFavorites();
   const [root, setRoot] = useState(0);
-  const [activeChords, setActiveChords] = useState<Set<number>>(new Set());
+  const bookmarked = isFavorite('Progressions', root);
+  const [progression, setProgression] = useState<number[]>([]);
 
   const diatonicChords = useMemo(() => getDiatonicChords(root), [root]);
 
   const toggleChord = (index: number) => {
-    setActiveChords(prev => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
+    setProgression(prev =>
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
   };
 
-  const getVoicing = (quality: string): ChordVoicing | null => {
-    if (quality === 'Major') {
-      return generateBarreVoicings(root)[0];
-    } else if (quality === 'Minor') {
-      return generateMinorBarreVoicings(root)[0];
-    }
-    return generateBarreVoicings(root)[0];
+  const getVoicing = (chordRoot: number, quality: string): ChordVoicing | null => {
+    const voicings = getChordVoicings(chordRoot, quality);
+    return voicings.length > 0 ? voicings[0] : null;
   };
 
   const renderCircleOfFifths = () => {
@@ -50,7 +44,12 @@ export function ProgressionsScreen() {
           const y = cy + r * Math.sin(angle);
           const isActive = note === root;
           return (
-            <G key={i}>
+            <G
+              key={i}
+              onPress={() => { setRoot(note); setProgression([]); }}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[note]} as key`}
+            >
               <Circle
                 cx={x}
                 cy={y}
@@ -68,7 +67,7 @@ export function ProgressionsScreen() {
                 textAnchor="middle"
                 alignmentBaseline="central"
               >
-                {NOTE_NAMES[note]}
+                {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[note]}
               </SvgText>
             </G>
           );
@@ -80,46 +79,78 @@ export function ProgressionsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Progressions</Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Progressions</Text>
+          <TouchableOpacity
+            onPress={() => addFavorite({ tab: 'Progressions', root })}
+            accessibilityRole="button"
+            accessibilityLabel={bookmarked ? 'Already saved' : 'Save to favorites'}
+          >
+            <Text style={[styles.bookmark, { color: bookmarked ? theme.accent : theme.textMuted }]}>
+              {bookmarked ? '♥' : '♡'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Key</Text>
-        <NotePicker activeNote={root} onSelect={setRoot} />
+        <NotePicker activeNote={root} onSelect={(note) => { setRoot(note); setProgression([]); }} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Diatonic Chords</Text>
-        <View style={styles.chordsContainer}>
+        <View style={styles.numeralRow}>
           {diatonicChords.map((chord, index) => {
-            const isActive = activeChords.has(index);
+            const isActive = progression.includes(index);
             return (
               <TouchableOpacity
                 key={index}
                 style={[
-                  styles.chordCard,
+                  styles.numeralButton,
                   {
                     backgroundColor: isActive ? theme.bgElevated : theme.bgSecondary,
-                    borderColor: theme.border,
+                    borderColor: isActive ? theme.accent : theme.border,
+                    borderBottomColor: getChordQualityColor(chord.quality, isDark),
                   },
                 ]}
                 onPress={() => toggleChord(index)}
               >
-                <Text style={[styles.numeral, { color: isActive ? theme.accent : theme.textMuted }]}>
+                <Text style={[styles.numeralText, { color: isActive ? theme.accent : theme.textMuted }]}>
                   {chord.numeral}
                 </Text>
-                <Text style={[styles.chordName, { color: theme.textPrimary }]}>
-                  {NOTE_NAMES[chord.root]} {chord.quality === 'Dim' ? '°' : chord.quality === 'Minor' ? 'm' : ''}
-                </Text>
-                {isActive && (
-                  <View style={styles.previewContainer}>
-                    <ChordPreview
-                      voicing={getVoicing(chord.quality)}
-                      root={chord.root}
-                      chordName=""
-                    />
-                  </View>
-                )}
               </TouchableOpacity>
             );
           })}
         </View>
+
+        {progression.length > 0 && (
+          <>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Progression</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.progressionRow}
+            >
+              {progression.map((chordIndex, pos) => {
+                const chord = diatonicChords[chordIndex];
+                const voicing = getVoicing(chord.root, chord.quality);
+                const noteName = (useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[chord.root];
+                const qualitySuffix = chord.quality === 'Dim' ? '°' : chord.quality === 'Minor' ? 'm' : '';
+                return (
+                  <View
+                    key={pos}
+                    style={[styles.progressionCard, { backgroundColor: theme.bgSecondary, borderColor: theme.border }]}
+                  >
+                    <Text style={[styles.progressionNumeral, { color: theme.textMuted }]}>
+                      {chord.numeral}
+                    </Text>
+                    <Text style={[styles.progressionChordName, { color: theme.textPrimary }]}>
+                      {noteName}{qualitySuffix}
+                    </Text>
+                    <ChordDiagram voicing={voicing} root={chord.root} />
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Circle of Fifths</Text>
         <View style={styles.circleContainer}>
@@ -133,31 +164,45 @@ export function ProgressionsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: '700' },
+  bookmark: { fontSize: 28, paddingHorizontal: 4 },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  chordsContainer: {
+  numeralRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 4,
   },
-  chordCard: {
-    width: '30%',
-    padding: 12,
-    borderRadius: 8,
+  numeralButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
+    borderRadius: 6,
     borderWidth: 1,
+    borderBottomWidth: 3,
     alignItems: 'center',
   },
-  numeral: {
-    fontSize: 18,
+  numeralText: {
+    fontSize: 11,
     fontWeight: '700',
   },
-  chordName: {
-    fontSize: 12,
-    marginTop: 4,
+  progressionRow: {
+    gap: 8,
+    paddingBottom: 4,
   },
-  previewContainer: {
-    marginTop: 8,
+  progressionCard: {
     alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  progressionNumeral: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  progressionChordName: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   circleContainer: {
     alignItems: 'center',
