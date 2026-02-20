@@ -65,6 +65,16 @@ export const lightTheme: ThemeColors = {
   nutColor: '#8a7a5e',
 };
 
+/** Get the border accent color for a chord card based on its quality. */
+export function getChordQualityColor(quality: string, isDark: boolean): string {
+  switch (quality) {
+    case 'Major': return '#c8962a';
+    case 'Minor': return '#3a7bd5';
+    case 'Dim':   return '#c0392b';
+    default:      return '#555';
+  }
+}
+
 /** Get the dot color for a note based on its interval from root. */
 export function getNoteColor(interval: number, isRoot: boolean): string {
   if (isRoot) return '#e8734a';

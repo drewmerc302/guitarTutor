@@ -3,26 +3,32 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useWindowDimensions } from 'react-native';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { ChordsScreen } from './src/screens/ChordsScreen';
 import { ScalesScreen } from './src/screens/ScalesScreen';
 import { ProgressionsScreen } from './src/screens/ProgressionsScreen';
 import { TriadsScreen } from './src/screens/TriadsScreen';
 import { ArpeggiosScreen } from './src/screens/ArpeggiosScreen';
-import { Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { ErrorBoundary } from './src/components';
 
 const Tab = createBottomTabNavigator();
 
-function TabIcon({ label, focused, color }: { label: string; focused: boolean; color: string }) {
-  return (
-    <Text style={[styles.tabLabel, { color }]}>
-      {label}
-    </Text>
-  );
-}
+const withErrorBoundary = (Screen: React.ComponentType, label: string) =>
+  function WrappedScreen() {
+    return (
+      <ErrorBoundary fallbackLabel={label}>
+        <Screen />
+      </ErrorBoundary>
+    );
+  };
 
 function AppNavigator() {
-  const { theme, isDark, toggleTheme } = useTheme();
+  const { theme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, setCapo } = useTheme();
+  const { width } = useWindowDimensions();
+  const isCompact = width < 380;
 
   return (
     <>
@@ -30,7 +36,74 @@ function AppNavigator() {
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
-            headerShown: false,
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: theme.bgSecondary,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.border,
+            },
+            headerTitleAlign: 'left',
+            headerTitle: () => (
+              <Text style={[styles.headerTitle, { color: theme.accent }]} numberOfLines={1}>
+                {isCompact ? 'GT' : 'GUITAR TUTOR'}
+              </Text>
+            ),
+            headerRight: () => (
+              <View style={styles.headerButtons}>
+                <TouchableOpacity
+                  onPress={toggleLeftHanded}
+                  style={styles.headerBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={isLeftHanded ? 'Switch to right-handed' : 'Switch to left-handed'}
+                >
+                  <Text style={[styles.headerBtnText, { color: isLeftHanded ? theme.accent : theme.textMuted, fontSize: 14 }]}>
+                    LH
+                  </Text>
+                </TouchableOpacity>
+                <View style={styles.capoControl}>
+                  <TouchableOpacity
+                    onPress={() => setCapo(Math.max(0, capo - 1))}
+                    style={styles.capoBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Decrease capo"
+                  >
+                    <Text style={[styles.capoBtnText, { color: theme.textSecondary }]}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.capoLabel, { color: capo > 0 ? theme.accent : theme.textMuted }]}>
+                    {capo > 0 ? `C${capo}` : 'C'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setCapo(Math.min(7, capo + 1))}
+                    style={styles.capoBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Increase capo"
+                  >
+                    <Text style={[styles.capoBtnText, { color: theme.textSecondary }]}>+</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  onPress={toggleFlats}
+                  style={styles.headerBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={useFlats ? 'Switch to sharps' : 'Switch to flats'}
+                >
+                  <Text style={[styles.headerBtnText, { color: useFlats ? theme.accent : theme.textMuted }]}>
+                    {useFlats ? '♭' : '♯'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  style={styles.headerBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  <Text style={[styles.headerBtnText, { color: theme.accent }]}>
+                    {isDark ? '☀' : '☾'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ),
+            headerTintColor: theme.accent,
             tabBarStyle: {
               backgroundColor: theme.bgSecondary,
               borderTopColor: theme.border,
@@ -45,46 +118,46 @@ function AppNavigator() {
         >
           <Tab.Screen
             name="Chords"
-            component={ChordsScreen}
+            component={withErrorBoundary(ChordsScreen, 'Chords')}
             options={{
-              tabBarIcon: ({ focused, color }) => (
-                <TabIcon label="♫" focused={focused} color={color} />
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="guitar-acoustic" size={size} color={color} />
               ),
             }}
           />
           <Tab.Screen
             name="Scales"
-            component={ScalesScreen}
+            component={withErrorBoundary(ScalesScreen, 'Scales')}
             options={{
-              tabBarIcon: ({ focused, color }) => (
-                <TabIcon label="♪" focused={focused} color={color} />
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="music-note-eighth" size={size} color={color} />
               ),
             }}
           />
           <Tab.Screen
             name="Progressions"
-            component={ProgressionsScreen}
+            component={withErrorBoundary(ProgressionsScreen, 'Progressions')}
             options={{
-              tabBarIcon: ({ focused, color }) => (
-                <TabIcon label="⟳" focused={focused} color={color} />
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="music-note-plus" size={size} color={color} />
               ),
             }}
           />
           <Tab.Screen
             name="Triads"
-            component={TriadsScreen}
+            component={withErrorBoundary(TriadsScreen, 'Triads')}
             options={{
-              tabBarIcon: ({ focused, color }) => (
-                <TabIcon label="⋮" focused={focused} color={color} />
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="triangle-outline" size={size} color={color} />
               ),
             }}
           />
           <Tab.Screen
             name="Arpeggios"
-            component={ArpeggiosScreen}
+            component={withErrorBoundary(ArpeggiosScreen, 'Arpeggios')}
             options={{
-              tabBarIcon: ({ focused, color }) => (
-                <TabIcon label="∿" focused={focused} color={color} />
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="music" size={size} color={color} />
               ),
             }}
           />
@@ -105,7 +178,40 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  tabLabel: {
+  headerTitle: {
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 4,
+    gap: 0,
+  },
+  headerBtn: {
+    padding: 8,
+  },
+  headerBtnText: {
     fontSize: 20,
+  },
+  capoControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  capoBtn: {
+    padding: 6,
+  },
+  capoBtnText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  capoLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    minWidth: 22,
+    textAlign: 'center',
   },
 });

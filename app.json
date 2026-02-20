@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "temp_project",
-    "slug": "temp_project",
+    "name": "Guitar Tutor",
+    "slug": "guitar-tutor",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.guitartutor.app"
     },
     "android": {
       "adaptiveIcon": {
