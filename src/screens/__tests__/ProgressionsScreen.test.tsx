@@ -208,4 +208,132 @@ describe('ProgressionsScreen', () => {
     expect(clearedNumeral).toBeDefined();
     expect(getColor(clearedNumeral)).toBe(MUTED);
   });
+
+  // ── 4b: Three-ring Circle of Fifths ──────────────────────────────────────
+
+  test('circle of fifths renders middle ring relative minor nodes', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    // In the key of C, the relative minor nodes should include 'Am', 'Em', 'Bm', etc.
+    // Am is the relative minor of C (position 0 in CIRCLE_OF_FIFTHS).
+    expect(json).toContain('Am');
+  });
+
+  test('circle of fifths renders inner ring diminished nodes', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    // Leading-tone dim for C major key (position 0): (0+11)%12=11 = B → B°
+    expect(json).toContain('B°');
+  });
+
+  test('circle of fifths middle ring uses muted blue fill', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('"fill":"#2a4a7a"');
+  });
+
+  test('circle of fifths inner ring uses muted red fill', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('"fill":"#7a2a2a"');
+  });
+
+  // ── 4c: Repeated diatonic chord selection and long-press removal ──────────
+
+  test('tapping a diatonic chord card multiple times appends duplicates', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    const allTouchables = tree.root.findAllByType('TouchableOpacity');
+    const numChordCards = allTouchables.filter((el: any) => el.props.accessibilityLabel == null);
+
+    // Tap the I chord card three times
+    act(() => { numChordCards[0].props.onPress(); });
+    act(() => { numChordCards[0].props.onPress(); });
+    act(() => { numChordCards[0].props.onPress(); });
+
+    // The progression section should now contain three cards.
+    // Each progression card is a TouchableOpacity with onLongPress defined.
+    const allTouchables2 = tree.root.findAllByType('TouchableOpacity');
+    const progressionCards = allTouchables2.filter(
+      (el: any) => el.props.accessibilityLabel == null && el.props.onLongPress != null
+    );
+    expect(progressionCards.length).toBe(3);
+  });
+
+  test('long-pressing a progression card removes it', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    const allTouchables = tree.root.findAllByType('TouchableOpacity');
+    const numChordCards = allTouchables.filter((el: any) => el.props.accessibilityLabel == null);
+
+    // Tap I card twice to create two entries
+    act(() => { numChordCards[0].props.onPress(); });
+    act(() => { numChordCards[0].props.onPress(); });
+
+    // Verify two progression cards exist
+    const before = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.accessibilityLabel == null && el.props.onLongPress != null
+    );
+    expect(before.length).toBe(2);
+
+    // Long-press the first progression card to remove it
+    act(() => { before[0].props.onLongPress(); });
+
+    // Now only one progression card should remain
+    const after = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.accessibilityLabel == null && el.props.onLongPress != null
+    );
+    expect(after.length).toBe(1);
+  });
+
+  // ── 7: Scale degree fretboard preview ────────────────────────────────────
+
+  test('tapping a progression card shows fretboard preview label', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Add chord I to progression
+    const allTouchables = tree.root.findAllByType('TouchableOpacity');
+    const numChordCards = allTouchables.filter((el: any) => el.props.accessibilityLabel == null);
+    act(() => { numChordCards[0].props.onPress(); });
+
+    // Tap the resulting progression card to select it
+    const progressionCards = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.accessibilityLabel == null && el.props.onLongPress != null
+    );
+    act(() => { progressionCards[0].props.onPress(); });
+
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('Chord tones on neck');
+  });
+
+  test('tapping a selected progression card deselects it and hides preview', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Add chord I
+    const allTouchables = tree.root.findAllByType('TouchableOpacity');
+    const numChordCards = allTouchables.filter((el: any) => el.props.accessibilityLabel == null);
+    act(() => { numChordCards[0].props.onPress(); });
+
+    // Select the progression card
+    const progressionCards = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.accessibilityLabel == null && el.props.onLongPress != null
+    );
+    act(() => { progressionCards[0].props.onPress(); });
+    // Deselect by tapping again
+    const progressionCards2 = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.accessibilityLabel == null && el.props.onLongPress != null
+    );
+    act(() => { progressionCards2[0].props.onPress(); });
+
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).not.toContain('Chord tones on neck');
+  });
 });

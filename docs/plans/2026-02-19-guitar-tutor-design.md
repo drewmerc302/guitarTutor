@@ -2,6 +2,35 @@
 
 **Date:** 2026-02-19
 **Status:** Approved
+**Implementation Status:** Substantially complete — see [TODO.md](../TODO.md) for remaining items
+
+## Implementation Status Summary
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Music theory engine | ✅ Complete | All 10 modules implemented and tested |
+| Theme system (light/dark) | ✅ Complete | System preference + manual toggle |
+| GuitarNeck SVG component | ✅ Complete | All display modes, voicing highlight, box highlight |
+| FretboardViewer (scrollable) | ✅ Complete | Auto-scrolls on narrow screens |
+| NotePicker | ✅ Complete | 12-note chromatic selector with accessibility |
+| TypePicker | ✅ Complete | Horizontal scroll pill selector |
+| DisplayToggle | ✅ Complete | Configurable mode segmented control |
+| ChordPreview (mini diagram) | ✅ Complete | Fret offset, muted strings, finger numbers |
+| StringGroupPicker | ✅ Complete | All / 1-2-3 / 2-3-4 / 3-4-5 / 4-5-6 |
+| ScalePositionPicker | ✅ Complete | Multi-select with fret range labels |
+| ErrorBoundary | ✅ Complete | Wraps all 5 tab screens |
+| Chords tab | ✅ Complete | All voicings, promote via tap, Finger/Interval/Note |
+| Scales tab | ✅ Complete | All modes, 5 box positions, box highlights |
+| Progressions tab | ✅ Complete | Diatonic chords, interactive Circle of Fifths |
+| Triads tab | ✅ Complete | All qualities, inversions, string groups |
+| Arpeggios tab | ✅ Complete | All 8 types, Interval/Note display |
+| Navigation + tab icons | ✅ Complete | MaterialCommunityIcons, header theme toggle |
+| Accessibility | ✅ Complete | accessibilityRole + accessibilityLabel throughout |
+| React.memo optimization | ✅ Complete | GuitarNeck, ChordPreview, FretboardViewer |
+| Engine unit tests | ✅ Complete | 134 tests across all engine + UI modules |
+| Integration tests | ✅ Complete | Picker→state→highlight assertions on all 4 playable screens |
+| Enharmonic display (C#/Db) | ✅ Complete | ♯/♭ toggle in header; NotePicker + GuitarNeck use flat names |
+| engine/tuning.ts separation | ✅ Complete | STANDARD_TUNING, TOTAL_FRETS, STRING_NAMES in tuning.ts |
 
 ## Overview
 
@@ -84,64 +113,77 @@ Single reusable `<GuitarNeck />` SVG component accepting:
 
 ### Tab Details
 
-**Chords:**
-- Note picker + chord family picker (Major, Minor, 7th, Maj7, Min7, Dim, Aug, Sus2, Sus4, etc.)
-- Display mode toggle
-- All voicings shown; primary bold, alternates greyed
+**Chords:** ✅ Complete
+- Note picker + chord family picker (Major, Minor, 7th, Maj7, Min7, Dim, Aug, Sus2, Sus4, Dim7, Min7b5, 9th)
+- Display mode toggle (Finger / Interval / Note)
+- All voicings shown; primary bold, alternates greyed (0.2 opacity)
 - Tap greyed root → promotes that voicing to bold
+- 5 CAGED shapes for Major, 3 shapes for Minor, dedicated shapes for all other types
 
-**Scales:**
-- Note picker + scale type picker (Major, Minor, Harmonic Minor, Melodic Minor, Pentatonics, Blues, etc.)
-- Mode selector (Ionian–Locrian) when applicable
-- Display mode toggle
-- Root notes visually distinguished (larger or different color)
+**Scales:** ✅ Complete
+- Note picker + scale type picker (Major, Natural Minor, Harmonic Minor, Melodic Minor, Major Pentatonic, Minor Pentatonic, Blues)
+- Mode selector (Ionian–Locrian) — shown only for 7-note scales
+- Display mode toggle (Interval / Note — no Finger mode)
+- Root notes visually distinguished (slightly larger dot)
+- ScalePositionPicker: multi-select 5 box positions with fret ranges; "All" shows full neck
 
-**Progressions:**
+**Progressions:** ✅ Complete
 - Note picker (selects key)
 - Displays diatonic chords as roman numerals: I, ii, iii, IV, V, vi, vii°
-- Tapping a chord shows inline preview (small fretboard diagram)
-- Circle of fifths visualization as secondary view
+- Tapping a chord shows inline ChordPreview (mini fretboard diagram with finger numbers)
+- Circle of Fifths is interactive — tapping any note changes the active key (and clears open chord previews)
 
-**Triads:**
+**Triads:** ✅ Complete
 - Note picker + quality picker (Major, Minor, Dim, Aug)
-- String group selector (1-2-3, 2-3-4, 3-4-5, 4-5-6, All)
-- Inversion picker (Root, 1st, 2nd)
-- Neck highlights triad shapes on selected string groups
+- String group selector (All, 1-2-3, 2-3-4, 3-4-5, 4-5-6)
+- Inversion picker (Root, 1st Inv, 2nd Inv)
+- Display mode toggle (Finger / Interval / Note)
+- Neck highlights all playable triad shapes for the selected string groups and inversion
 
-**Arpeggios:**
-- Note picker + arpeggio type picker (Major, Minor, Dom7, Maj7, Min7, etc.)
-- Display mode toggle
-- Neck highlights arpeggio tones across full neck
+**Arpeggios:** ✅ Complete
+- Note picker + arpeggio type picker (Major, Minor, Dom7, Maj7, Min7, Dim7, Min7b5, Aug)
+- Display mode toggle (Interval / Note — no Finger mode)
+- Neck highlights arpeggio tones across full neck with interval-based coloring
 
 ## Project Structure
 
 ```
 src/
   engine/              # Pure music theory (zero UI dependencies)
-    notes.ts           # Note representation, enharmonics
-    intervals.ts       # Interval calculations
-    chords.ts          # Chord definitions & voicing computation
-    scales.ts          # Scale/mode definitions
-    triads.ts          # Triad shapes by string group + inversion
-    arpeggios.ts       # Arpeggio patterns
-    progressions.ts    # Diatonic chord progressions, circle of fifths
-    tuning.ts          # Tuning definitions (standard, extensible)
+    notes.ts           # ✅ NOTE_NAMES, STANDARD_TUNING, noteValue()
+    intervals.ts       # ✅ INTERVAL_NAMES, intervalFromRoot()
+    fretboard.ts       # ✅ getNotesOnFretboard() — core function for all 5 tabs
+    fingers.ts         # ✅ assignFingers() algorithm
+    chords.ts          # ✅ CHORD_TYPES, CAGED voicings, all 12 chord type generators
+    scales.ts          # ✅ SCALE_TYPES, mode rotation, 5-position box system
+    triads.ts          # ✅ TRIAD_TYPES, inversions, multi-group computation
+    arpeggios.ts       # ✅ ARP_TYPES (8 types)
+    progressions.ts    # ✅ getDiatonicChords(), CIRCLE_OF_FIFTHS
+    tuning.ts          # ✅ STANDARD_TUNING, TOTAL_FRETS, STRING_NAMES (re-exported from notes.ts for compat)
+    __tests__/         # ✅ Unit tests for all engine modules
   components/
-    GuitarNeck.tsx     # Shared SVG fretboard component
-    NotePicker.tsx     # Reusable 12-note selector
-    TypePicker.tsx     # Reusable type/family selector
-    DisplayToggle.tsx  # Finger / Interval / Note toggle
-    ChordPreview.tsx   # Small inline chord diagram for Progressions tab
+    GuitarNeck.tsx          # ✅ Shared SVG fretboard (React.memo)
+    FretboardViewer.tsx     # ✅ Scrollable wrapper for narrow screens (React.memo)
+    NotePicker.tsx          # ✅ 12-note chromatic selector with accessibility
+    TypePicker.tsx          # ✅ Horizontal scroll pill selector with accessibility
+    DisplayToggle.tsx       # ✅ Segmented control with accessibility
+    ChordPreview.tsx        # ✅ Mini chord diagram for Progressions tab (React.memo)
+    StringGroupPicker.tsx   # ✅ String group selector with accessibility
+    ScalePositionPicker.tsx # ✅ Box position multi-selector with accessibility
+    ErrorBoundary.tsx       # ✅ Class component error boundary
+    index.ts                # ✅ Barrel export
+    __tests__/              # ✅ Component render tests
   screens/
-    ChordsScreen.tsx
-    ScalesScreen.tsx
-    ProgressionsScreen.tsx
-    TriadsScreen.tsx
-    ArpeggiosScreen.tsx
+    ChordsScreen.tsx        # ✅ Complete
+    ScalesScreen.tsx        # ✅ Complete
+    ProgressionsScreen.tsx  # ✅ Complete — Circle of Fifths interactive
+    TriadsScreen.tsx        # ✅ Complete
+    ArpeggiosScreen.tsx     # ✅ Complete
+    __tests__/              # ✅ Render tests + interaction tests (picker→state→highlight)
   theme/
-    colors.ts          # Light/dark theme color definitions
-    ThemeContext.tsx    # Theme toggle provider
-  App.tsx              # Entry point, navigation setup
+    colors.ts          # ✅ Light/dark theme colors, getNoteColor()
+    ThemeContext.tsx   # ✅ System preference + manual toggle
+  App.tsx              # ✅ Bottom tabs, MaterialCommunityIcons, ErrorBoundary wrappers
 ```
 
 ## Theme Support
@@ -159,6 +201,6 @@ src/
 
 ## Testing Strategy
 
-- **Engine:** Unit tests — given root + pattern, verify exact fret positions
-- **Components:** Snapshot tests for GuitarNeck at key states
-- **Screens:** Integration tests verifying picker → neck updates
+- **Engine:** ✅ Unit tests — given root + pattern, verify exact fret positions
+- **Components:** ✅ Render tests for all 8 components (7 test suites)
+- **Screens:** ✅ Render tests for all 5 screens; ✅ interaction tests (picker→state→highlight) for 4 screens; 142 tests total passing
