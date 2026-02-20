@@ -1,6 +1,7 @@
 // src/components/DisplayToggle.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 
 interface DisplayToggleProps {
@@ -24,8 +25,16 @@ export function DisplayToggle({ modes, activeMode, onSelect }: DisplayToggleProp
               borderColor: theme.border,
             },
           ]}
-          onPress={() => onSelect(mode.toLowerCase())}
+          onPress={() => {
+            if (Platform.OS !== 'web') {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            onSelect(mode.toLowerCase());
+          }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`${mode} display mode`}
+          accessibilityState={{ selected: mode.toLowerCase() === activeMode }}
         >
           <Text
             style={[

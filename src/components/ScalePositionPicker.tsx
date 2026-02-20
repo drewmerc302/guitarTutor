@@ -1,6 +1,7 @@
 // src/components/ScalePositionPicker.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import { ScalePosition } from '../engine/scales';
 
@@ -25,8 +26,16 @@ export function ScalePositionPicker({ positions, activeSet, onToggle }: ScalePos
             borderColor: theme.border,
           },
         ]}
-        onPress={() => onToggle('all')}
+        onPress={() => {
+          if (Platform.OS !== 'web') {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }
+          onToggle('all');
+        }}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel="All positions"
+        accessibilityState={{ selected: isAllActive }}
       >
         <Text
           style={[
@@ -53,8 +62,16 @@ export function ScalePositionPicker({ positions, activeSet, onToggle }: ScalePos
                 borderColor: theme.border,
               },
             ]}
-            onPress={() => onToggle(key)}
+            onPress={() => {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              onToggle(key);
+            }}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`${pos.label} position, frets ${pos.fretStart} to ${pos.fretEnd}`}
+            accessibilityState={{ selected: isActive }}
           >
             <Text
               style={[
@@ -77,13 +94,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   button: {
-    paddingHorizontal: 10,
+    width: '33%',
+    paddingHorizontal: 4,
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   text: {
     fontSize: 11,

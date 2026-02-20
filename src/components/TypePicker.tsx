@@ -1,15 +1,16 @@
-// src/components/Picker.tsx
+// src/components/TypePicker.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 
-interface PickerProps {
+interface TypePickerProps {
   types: string[];
   activeType: string;
   onSelect: (type: string) => void;
 }
 
-export function Picker({ types, activeType, onSelect }: PickerProps) {
+export function TypePicker({ types, activeType, onSelect }: TypePickerProps) {
   const { theme } = useTheme();
 
   return (
@@ -28,8 +29,16 @@ export function Picker({ types, activeType, onSelect }: PickerProps) {
               borderColor: theme.border,
             },
           ]}
-          onPress={() => onSelect(name)}
+          onPress={() => {
+            if (Platform.OS !== 'web') {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            onSelect(name);
+          }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={name}
+          accessibilityState={{ selected: name === activeType }}
         >
           <Text
             style={[

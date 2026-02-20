@@ -12,7 +12,7 @@ interface ChordPreviewProps {
   chordName: string;
 }
 
-export function ChordPreview({ voicing, root, chordName }: ChordPreviewProps) {
+function ChordPreviewInner({ voicing, root, chordName }: ChordPreviewProps) {
   const { theme } = useTheme();
 
   const rendered = useMemo(() => {
@@ -64,7 +64,7 @@ export function ChordPreview({ voicing, root, chordName }: ChordPreviewProps) {
   const ss = (h - padT - padB) / 5;
 
   const renderDots = (): ReactElement[] => {
-    const dots: JSX.Element[] = [];
+    const dots: React.ReactElement[] = [];
     for (const v of voicing!) {
       if (v.f < 0) {
         dots.push(
@@ -119,7 +119,7 @@ export function ChordPreview({ voicing, root, chordName }: ChordPreviewProps) {
   };
 
   const renderFretWires = (): ReactElement[] => {
-    const wires: JSX.Element[] = [];
+    const wires: React.ReactElement[] = [];
     const startWire = fretOffset === 0 ? 2 : 1;
     for (let f = startWire; f <= displayFrets; f++) {
       wires.push(
@@ -139,7 +139,7 @@ export function ChordPreview({ voicing, root, chordName }: ChordPreviewProps) {
   };
 
   const renderStrings = (): ReactElement[] => {
-    const strings: JSX.Element[] = [];
+    const strings: React.ReactElement[] = [];
     for (let s = 0; s < 6; s++) {
       strings.push(
         <Line
@@ -196,3 +196,5 @@ export function ChordPreview({ voicing, root, chordName }: ChordPreviewProps) {
     </Svg>
   );
 }
+
+export const ChordPreview = React.memo(ChordPreviewInner);

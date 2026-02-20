@@ -1,6 +1,7 @@
 // src/components/StringGroupPicker.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 
 interface StringGroupPickerProps {
@@ -31,8 +32,16 @@ export function StringGroupPicker({ active, onSelect }: StringGroupPickerProps) 
               borderColor: theme.border,
             },
           ]}
-          onPress={() => onSelect(group.value)}
+          onPress={() => {
+            if (Platform.OS !== 'web') {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            onSelect(group.value);
+          }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`${group.label} strings`}
+          accessibilityState={{ selected: group.value === active }}
         >
           <Text
             style={[
