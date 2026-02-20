@@ -37,9 +37,12 @@ describe('applyModeRotation', () => {
 });
 
 describe('computeScalePositions', () => {
-  test('returns 5 positions for C major', () => {
+  test('returns positions for C major (Box 1 starts at fret 8, root C on low E)', () => {
+    // C major: low E (open=4), C=0, first fret: (4+8)%12=0. Root at fret 8.
+    // With TOTAL_FRETS=15, boxes fit from fret 8 onward within the neck.
     const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
-    expect(positions).toHaveLength(5);
+    expect(positions.length).toBeGreaterThanOrEqual(1);
+    expect(positions[0].fretStart).toBe(8);
   });
 
   test('each position has label, fretStart, fretEnd, and notes', () => {
@@ -84,7 +87,26 @@ describe('computeScalePositions', () => {
   test('works for all 12 roots', () => {
     for (let root = 0; root < 12; root++) {
       const positions = computeScalePositions(root, [0,2,4,5,7,9,11]);
-      expect(positions.length).toBe(5);
+      expect(positions.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  test('A minor pentatonic Box 1 starts at fret 5 (root A on low E)', () => {
+    // Low E (STANDARD_TUNING[5] = 4). A = note value 9. Fret: (4 + 5) % 12 = 9. ✓
+    const positions = computeScalePositions(9, [0, 3, 5, 7, 10]);
+    expect(positions[0].fretStart).toBe(5);
+  });
+
+  test('Box 1 always starts at the root note on the low E string for all 12 roots', () => {
+    const LOW_E_OPEN = 4; // STANDARD_TUNING[5]
+    for (let root = 0; root < 12; root++) {
+      // Find the first fret on low E that produces this root note
+      let expectedFret = 0;
+      for (let f = 0; f <= 24; f++) {
+        if ((LOW_E_OPEN + f) % 12 === root) { expectedFret = f; break; }
+      }
+      const positions = computeScalePositions(root, [0, 2, 4, 5, 7, 9, 11]);
+      expect(positions[0].fretStart).toBe(expectedFret);
     }
   });
 });

@@ -40,7 +40,7 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
 
   // Find starting fret near low E root
   const baseRootE = (() => {
-    for (let f = 0; f <= 3; f++) {
+    for (let f = 0; f <= TOTAL_FRETS; f++) {
       if ((STANDARD_TUNING[5] + f) % 12 === root) return f;
     }
     return 0;
@@ -67,7 +67,7 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
   const positions: ScalePosition[] = [];
   for (let i = 0; i < boxStarts.length; i++) {
     const startFret = boxStarts[i];
-    const endFret = startFret + 4;
+    const endFret = startFret + 3;
     const minFret = startFret === 0 ? 0 : startFret;
     const boxNotes: FretboardNote[] = [];
 
