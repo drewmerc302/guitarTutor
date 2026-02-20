@@ -33,8 +33,8 @@ function ChordDiagramInner({ voicing, root }: ChordDiagramProps) {
     Array.from({ length: 6 }, (_, s) => (
       <Line
         key={`str-${s}`}
-        x1={padL + s * SS} y1={padT}
-        x2={padL + s * SS} y2={padT + gridH}
+        x1={padL + (5 - s) * SS} y1={padT}
+        x2={padL + (5 - s) * SS} y2={padT + gridH}
         stroke={theme.stringColor}
         strokeWidth={0.5 + s * 0.15}
         opacity={0.6}
@@ -59,7 +59,7 @@ function ChordDiagramInner({ voicing, root }: ChordDiagramProps) {
   const renderDots = (): ReactElement[] => {
     const dots: ReactElement[] = [];
     for (const v of voicing) {
-      const x = padL + v.s * SS;
+      const x = padL + (5 - v.s) * SS;
       if (v.f < 0) {
         dots.push(
           <SvgText key={`mute-${v.s}`} x={x} y={padT - 9}
