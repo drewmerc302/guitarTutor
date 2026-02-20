@@ -2,12 +2,12 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Line, Text as SvgText, G } from 'react-native-svg';
+import Svg, { Circle, Text as SvgText, G } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeContext';
 import { getChordQualityColor } from '../theme/colors';
 import { NotePicker, ChordDiagram } from '../components';
 import { getDiatonicChords, CIRCLE_OF_FIFTHS } from '../engine/progressions';
-import { getChordVoicings, ChordVoicing, CHORD_TYPES } from '../engine/chords';
+import { getChordVoicings, ChordVoicing } from '../engine/chords';
 import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 import { useFavorites } from '../hooks/useFavorites';
 
