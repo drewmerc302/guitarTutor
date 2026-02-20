@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { NotePicker, Picker, DisplayToggle, GuitarNeck } from '../components';
+import { NotePicker, TypePicker, DisplayToggle, FretboardViewer } from '../components';
 import { ARP_TYPES } from '../engine/arpeggios';
 import { getNotesOnFretboard } from '../engine/fretboard';
 
@@ -18,23 +18,33 @@ export function ArpeggiosScreen() {
 
   const notes = useMemo(() => getNotesOnFretboard(root, intervals), [root, intervals]);
 
+  const sweepNotes = useMemo(() => {
+    const sorted = [...notes].sort((a, b) => {
+      if (b.string !== a.string) return b.string - a.string; // string descending (5 first)
+      return a.fret - b.fret;                                 // fret ascending within string
+    });
+    return sorted.map((note, index) => ({ ...note, finger: index + 1 }));
+  }, [notes]);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Arpeggios</Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Arpeggios</Text>
+        </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
         <NotePicker activeNote={root} onSelect={setRoot} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <Picker types={arpTypes} activeType={type} onSelect={setType} />
+        <TypePicker types={arpTypes} activeType={type} onSelect={setType} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-        <DisplayToggle modes={['Interval', 'Note']} activeMode={display} onSelect={setDisplay} />
+        <DisplayToggle modes={['Interval', 'Note', 'Finger']} activeMode={display} onSelect={setDisplay} />
 
         <View style={styles.neckContainer}>
-          <GuitarNeck
-            notes={notes}
+          <FretboardViewer
+            notes={display === 'finger' ? sweepNotes : notes}
             displayMode={display as 'finger' | 'interval' | 'note'}
           />
         </View>
@@ -46,7 +56,8 @@ export function ArpeggiosScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
   neckContainer: { alignItems: 'center', marginTop: 24 },
 });

@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { NotePicker, Picker, DisplayToggle, GuitarNeck, ScalePositionPicker } from '../components';
+import { NotePicker, TypePicker, DisplayToggle, FretboardViewer, ScalePositionPicker } from '../components';
 import { SCALE_TYPES, MODE_NAMES, applyModeRotation, computeScalePositions } from '../engine/scales';
 
 export function ScalesScreen() {
@@ -72,18 +72,20 @@ export function ScalesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Scales</Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Scales</Text>
+        </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
         <NotePicker activeNote={root} onSelect={setRoot} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <Picker types={scaleTypes} activeType={type} onSelect={setType} />
+        <TypePicker types={scaleTypes} activeType={type} onSelect={setType} />
 
         {is7Note && (
           <>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Mode</Text>
-            <Picker types={MODE_NAMES} activeType={MODE_NAMES[mode]} onSelect={(m) => setMode(MODE_NAMES.indexOf(m))} />
+            <TypePicker types={MODE_NAMES} activeType={MODE_NAMES[mode]} onSelect={(m) => setMode(MODE_NAMES.indexOf(m))} />
           </>
         )}
 
@@ -94,7 +96,7 @@ export function ScalesScreen() {
         <ScalePositionPicker positions={positions} activeSet={activePositions} onToggle={handlePositionToggle} />
 
         <View style={styles.neckContainer}>
-          <GuitarNeck
+          <FretboardViewer
             notes={isAllActive ? positions.flatMap(p => p.notes) : Array.from(activePositions).flatMap(key => positions[parseInt(key)]?.notes || [])}
             displayMode={display as 'finger' | 'interval' | 'note'}
             activeNoteSet={activeNoteSet}
@@ -109,7 +111,8 @@ export function ScalesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
   neckContainer: { alignItems: 'center', marginTop: 24 },
 });

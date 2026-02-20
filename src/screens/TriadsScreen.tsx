@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { NotePicker, Picker, DisplayToggle, StringGroupPicker, GuitarNeck } from '../components';
+import { NotePicker, TypePicker, DisplayToggle, StringGroupPicker, FretboardViewer } from '../components';
 import { TRIAD_TYPES, computeTriadPositions } from '../engine/triads';
 import { assignFingers } from '../engine/fingers';
 
@@ -42,30 +42,41 @@ export function TriadsScreen() {
 
   const inversions = ['Root', '1st Inv', '2nd Inv'];
 
+  const boxHighlights = useMemo(() => {
+    const frets = notes.map(n => n.fret).filter(f => f > 0);
+    if (frets.length === 0) return [];
+    const minFret = Math.min(...frets);
+    const maxFret = Math.max(...frets);
+    return [{ fretStart: minFret, fretEnd: maxFret }];
+  }, [notes]);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Triads</Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Triads</Text>
+        </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
         <NotePicker activeNote={root} onSelect={setRoot} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <Picker types={triadTypes} activeType={type} onSelect={setType} />
+        <TypePicker types={triadTypes} activeType={type} onSelect={setType} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Strings</Text>
         <StringGroupPicker active={stringGroup} onSelect={setStringGroup} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Inversion</Text>
-        <Picker types={inversions} activeType={inversions[inversion]} onSelect={(v) => setInversion(inversions.indexOf(v))} />
+        <TypePicker types={inversions} activeType={inversions[inversion]} onSelect={(v) => setInversion(inversions.indexOf(v))} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
         <DisplayToggle modes={['Finger', 'Interval', 'Note']} activeMode={display} onSelect={setDisplay} />
 
         <View style={styles.neckContainer}>
-          <GuitarNeck
+          <FretboardViewer
             notes={displayNotes}
             displayMode={display as 'finger' | 'interval' | 'note'}
+            boxHighlights={boxHighlights}
           />
         </View>
       </ScrollView>
@@ -76,7 +87,8 @@ export function TriadsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
   neckContainer: { alignItems: 'center', marginTop: 24 },
 });
