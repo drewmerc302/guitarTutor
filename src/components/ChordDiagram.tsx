@@ -70,12 +70,6 @@ function ChordDiagramInner({ voicing, root }: ChordDiagramProps) {
       }
       if (v.f === 0) {
         dots.push(
-          <Circle key={`open-${v.s}`}
-            cx={x} cy={padT - 9} r={4}
-            fill="none" stroke={theme.textMuted} strokeWidth={1}
-          />
-        );
-        dots.push(
           <SvgText key={`open-text-${v.s}`} x={x} y={padT - 9}
             fill={theme.textMuted} fontSize={9}
             textAnchor="middle" alignmentBaseline="central">○</SvgText>

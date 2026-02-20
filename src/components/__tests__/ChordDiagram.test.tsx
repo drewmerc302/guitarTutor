@@ -55,7 +55,7 @@ describe('ChordDiagram', () => {
     let tree: any;
     act(() => { tree = create(<ChordDiagram voicing={openCVoicing} root={0} />); });
     const circles = tree.root.findAllByType('Circle');
-    // 4 fretted strings (f>0) → 4 dots
-    expect(circles.length).toBeGreaterThanOrEqual(4);
+    // 3 fretted strings (f>0) → 3 dots
+    expect(circles.length).toBeGreaterThanOrEqual(3);
   });
 });
