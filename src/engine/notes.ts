@@ -1,8 +1,8 @@
 // src/engine/notes.ts
 export const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-export const STANDARD_TUNING = [4, 11, 7, 2, 9, 4]; // E B G D A E (high to low)
-export const STRING_NAMES = ['E','B','G','D','A','E'];
-export const TOTAL_FRETS = 15;
+export const NOTE_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+import { STANDARD_TUNING } from './tuning';
+export { STANDARD_TUNING, TOTAL_FRETS, STRING_NAMES } from './tuning';
 
 /** Get the note value (0-11) at a given string and fret. */
 export function noteValue(string: number, fret: number): number {
