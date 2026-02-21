@@ -2,6 +2,9 @@
 import React from 'react';
 import { create, act } from 'react-test-renderer';
 import { ArpeggiosScreen } from '../ArpeggiosScreen';
+import { assignSweepOrder } from '../../engine/fingers';
+import { getNotesOnFretboard } from '../../engine/fretboard';
+import { ARP_TYPES } from '../../engine/arpeggios';
 
 describe('ArpeggiosScreen', () => {
   test('renders without crashing', () => {
@@ -94,5 +97,47 @@ describe('ArpeggiosScreen', () => {
 
     const prevMajorStyle = [].concat(...updatedButtons[12].props.style);
     expect(JSON.stringify(prevMajorStyle)).not.toContain('#d4a04a');
+  });
+
+  // --- Sweep order tests ---
+
+  test('assignSweepOrder produces consecutive 1-based finger numbers for C Major arpeggio', () => {
+    const intervals = ARP_TYPES['Major'];
+    const notes = getNotesOnFretboard(0, intervals).map(n => ({ ...n }));
+    assignSweepOrder(notes);
+    const fingers = notes.map(n => n.finger).filter(f => f !== null) as number[];
+    fingers.sort((a, b) => a - b);
+    // Should be 1, 2, 3, ... N with no gaps
+    expect(fingers[0]).toBe(1);
+    for (let i = 1; i < fingers.length; i++) {
+      expect(fingers[i]).toBe(fingers[i - 1] + 1);
+    }
+  });
+
+  test('sweep order is sorted: lowest string (string 5) gets the lowest sweep number', () => {
+    const intervals = ARP_TYPES['Major'];
+    const notes = getNotesOnFretboard(0, intervals).map(n => ({ ...n }));
+    assignSweepOrder(notes);
+    // Find the note on the highest string index (string 5 = low E) with lowest fret
+    const string5Notes = notes.filter(n => n.string === 5);
+    const string0Notes = notes.filter(n => n.string === 0);
+    if (string5Notes.length > 0 && string0Notes.length > 0) {
+      const minString5Finger = Math.min(...string5Notes.map(n => n.finger ?? Infinity));
+      const maxString0Finger = Math.max(...string0Notes.map(n => n.finger ?? -Infinity));
+      expect(minString5Finger).toBeLessThan(maxString0Finger);
+    }
+  });
+
+  test('within same string, lower fret note has a lower sweep number than higher fret note', () => {
+    const intervals = ARP_TYPES['Major'];
+    const notes = getNotesOnFretboard(0, intervals).map(n => ({ ...n }));
+    assignSweepOrder(notes);
+    // For each string that has multiple notes, verify fret order matches sweep order
+    for (let s = 0; s < 6; s++) {
+      const stringNotes = notes.filter(n => n.string === s).sort((a, b) => a.fret - b.fret);
+      for (let i = 0; i < stringNotes.length - 1; i++) {
+        expect(stringNotes[i].finger).toBeLessThan(stringNotes[i + 1].finger!);
+      }
+    }
   });
 });

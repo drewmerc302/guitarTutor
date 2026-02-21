@@ -2,6 +2,24 @@
 import { FretboardNote } from './fretboard';
 
 /**
+ * Assign sweep-picking order numbers to arpeggio notes.
+ * Notes are ordered from lowest string (high string index = low E) to highest string
+ * (low string index = high E), and within each string from lowest fret to highest fret.
+ * The finger field is set to the 1-based sweep index (1 = first note picked, N = last).
+ * Mutates the notes in place.
+ */
+export function assignSweepOrder(notes: FretboardNote[]): void {
+  if (!notes.length) return;
+  const sorted = [...notes].sort((a, b) => {
+    if (b.string !== a.string) return b.string - a.string; // string descending (5=low E first)
+    return a.fret - b.fret;                                // fret ascending within string
+  });
+  for (let i = 0; i < sorted.length; i++) {
+    sorted[i].finger = i + 1;
+  }
+}
+
+/**
  * Assign finger numbers (1-4) to notes based on fret spread within a position.
  * Open strings get finger 0. Mutates the notes in place.
  */

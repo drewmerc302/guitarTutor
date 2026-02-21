@@ -1,17 +1,19 @@
 // src/screens/ArpeggiosScreen.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
+import { usePersistentState } from '../hooks/usePersistentState';
 import { NotePicker, TypePicker, DisplayToggle, FretboardViewer } from '../components';
 import { ARP_TYPES } from '../engine/arpeggios';
 import { getNotesOnFretboard } from '../engine/fretboard';
+import { assignSweepOrder } from '../engine/fingers';
 
 export function ArpeggiosScreen() {
   const { theme } = useTheme();
-  const [root, setRoot] = useState(0);
-  const [type, setType] = useState('Major');
-  const [display, setDisplay] = useState('interval');
+  const [root, setRoot] = usePersistentState<number>('arpeggios.root', 0);
+  const [type, setType] = usePersistentState<string>('arpeggios.type', 'Major');
+  const [display, setDisplay] = usePersistentState<string>('arpeggios.display', 'interval');
 
   const arpTypes = Object.keys(ARP_TYPES);
   const intervals = ARP_TYPES[type];
@@ -19,11 +21,9 @@ export function ArpeggiosScreen() {
   const notes = useMemo(() => getNotesOnFretboard(root, intervals), [root, intervals]);
 
   const sweepNotes = useMemo(() => {
-    const sorted = [...notes].sort((a, b) => {
-      if (b.string !== a.string) return b.string - a.string; // string descending (5 first)
-      return a.fret - b.fret;                                 // fret ascending within string
-    });
-    return sorted.map((note, index) => ({ ...note, finger: index + 1 }));
+    const copied = notes.map(n => ({ ...n }));
+    assignSweepOrder(copied);
+    return copied;
   }, [notes]);
 
   return (

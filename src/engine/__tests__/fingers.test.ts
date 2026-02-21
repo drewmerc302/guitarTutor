@@ -1,5 +1,5 @@
 // src/engine/__tests__/fingers.test.ts
-import { assignFingers } from '../fingers';
+import { assignFingers, assignSweepOrder } from '../fingers';
 import { FretboardNote } from '../fretboard';
 
 function makeNote(s: number, f: number): FretboardNote {
@@ -42,5 +42,55 @@ describe('assignFingers', () => {
       expect(n.finger).toBeLessThanOrEqual(4);
       expect(n.finger).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe('assignSweepOrder', () => {
+  test('assigns 1-based sweep order starting from lowest string (highest index)', () => {
+    // string 5 = low E, string 0 = high E
+    const notes = [makeNote(0, 3), makeNote(3, 5), makeNote(5, 3)];
+    assignSweepOrder(notes);
+    // string 5 fret 3 should be first (1), string 3 fret 5 second (2), string 0 fret 3 last (3)
+    const byString5 = notes.find(n => n.string === 5)!;
+    const byString3 = notes.find(n => n.string === 3)!;
+    const byString0 = notes.find(n => n.string === 0)!;
+    expect(byString5.finger).toBe(1);
+    expect(byString3.finger).toBe(2);
+    expect(byString0.finger).toBe(3);
+  });
+
+  test('within same string, lower fret gets lower sweep number', () => {
+    const notes = [makeNote(2, 7), makeNote(2, 5), makeNote(2, 3)];
+    assignSweepOrder(notes);
+    const atFret3 = notes.find(n => n.fret === 3)!;
+    const atFret5 = notes.find(n => n.fret === 5)!;
+    const atFret7 = notes.find(n => n.fret === 7)!;
+    expect(atFret3.finger).toBe(1);
+    expect(atFret5.finger).toBe(2);
+    expect(atFret7.finger).toBe(3);
+  });
+
+  test('sweep order covers all notes with consecutive 1-based indices', () => {
+    const notes = [makeNote(0, 3), makeNote(1, 5), makeNote(2, 7), makeNote(3, 5), makeNote(4, 3), makeNote(5, 3)];
+    assignSweepOrder(notes);
+    const fingers = notes.map(n => n.finger).sort((a, b) => (a ?? 0) - (b ?? 0));
+    expect(fingers).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+
+  test('empty array is a no-op', () => {
+    expect(() => assignSweepOrder([])).not.toThrow();
+  });
+
+  test('single note gets sweep order 1', () => {
+    const notes = [makeNote(3, 5)];
+    assignSweepOrder(notes);
+    expect(notes[0].finger).toBe(1);
+  });
+
+  test('mutates notes in place', () => {
+    const note = makeNote(2, 4);
+    const notes = [note];
+    assignSweepOrder(notes);
+    expect(note.finger).toBe(1);
   });
 });
