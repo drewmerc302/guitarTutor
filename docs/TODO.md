@@ -1,6 +1,6 @@
 # Guitar Tutor — TODO & Feature Ideas
 
-**Last updated:** 2026-02-20
+**Last updated:** 2026-02-21
 
 ---
 
@@ -8,16 +8,16 @@
 
 ### Ready to code — no design work needed
 
-These have a clear problem and a known fix. Pick one and start.
+✅ **All items in this category are complete** (as of 2026-02-21).
 
-| Item | Scope |
+| Item | Status |
 |---|---|
-| **Fretboard nut spacing** — nut sits a full fret-width from string names | Small — one constant in `GuitarNeck.tsx` |
-| **Progressions key picker** — remove redundant 12-note selector (circle does the same job) | Small — delete from `ProgressionsScreen.tsx` |
-| **Chord quality color coding** — color diatonic buttons Major/Minor/Dim | Small — `ProgressionsScreen.tsx` + `colors.ts` |
-| **Arpeggio sweep order** — number notes in Finger mode | Medium — `arpeggios.ts` + `ArpeggiosScreen.tsx` |
-| **Persist user preferences** — remember root/type/display across restarts | Medium — `ThemeContext.tsx` |
-| **Integration tests** — Circle of Fifths SVG press untestable | Medium — `ProgressionsScreen.test.tsx` |
+| **Fretboard nut spacing** — nut sits a full fret-width from string names | ✅ Done — `5c612d4` |
+| **Progressions key picker** — remove redundant 12-note selector (circle does the same job) | ✅ Done — `eda2379` |
+| **Chord quality color coding** — color diatonic buttons Major/Minor/Dim | ✅ Done (pre-existing) |
+| **Arpeggio sweep order** — number notes in Finger mode | ✅ Done — `b8092b1` |
+| **Persist user preferences** — remember root/type/display across restarts | ✅ Done — `346615b` |
+| **Integration tests** — Circle of Fifths SVG press untestable | ✅ Done — engine-level tests added |
 
 ---
 
@@ -52,12 +52,22 @@ These items can't be fully designed until a larger architectural question is res
 
 ---
 
-### Suggested order if starting fresh
+### Suggested order going forward
 
-1. Knock out the ready-to-code small items (nut spacing, key picker removal, chord colors)
+1. ~~Knock out the ready-to-code small items~~ ✅ Done
 2. Run the UX audit and color palette exploration in parallel
 3. Use those findings to fuel the Visual Overhaul brainstorm
 4. Settings screen and responsive layout flow naturally out of that
+
+---
+
+## Recently Fixed (2026-02-21)
+
+- ✅ Fretboard nut spacing — `FB.openStringWidth: 20` constant added; nut now sits flush against string name labels instead of a full fret-width away; all 14 coordinate expressions in `GuitarNeck.tsx` updated
+- ✅ Progressions key picker removed — redundant `NotePicker` row deleted from Progressions tab; hint text "Tap the circle to change key" added; Circle of Fifths is now the sole key selector
+- ✅ Arpeggio sweep order — `assignSweepOrder()` in `engine/fingers.ts` numbers notes in Finger mode by string descending then fret ascending (low-E string first), giving a natural sweep-picking sequence
+- ✅ Persist user preferences — `usePersistentState` hook created; all 5 screens (Chords, Scales, Triads, Arpeggios, Progressions) now remember root, type, and display mode across app restarts via `AsyncStorage`
+- ✅ Integration tests (Circle of Fifths) — added engine-level `getDiatonicChords` tests; `testID`-based selectors replace brittle `findAllByProps` calls (React 19 fiber traversal workaround); all 179 tests green
 
 ---
 
@@ -455,27 +465,6 @@ genre context (e.g. "I–IV–V — Blues/Rock", "I–V–vi–IV — Pop").
 
 ---
 
-### Progressions tab — consider removing the 12-note key picker
-
-**What:** The Progressions tab has a `NotePicker` row (12 chromatic note buttons) at the top
-to select the key. The Circle of Fifths below it already lets the user tap any note to set
-the same key, making the picker largely redundant. The duplicate control adds vertical height
-and cognitive load without adding capability.
-
-**Options to consider:**
-- Remove the `NotePicker` row entirely and rely on the Circle of Fifths as the sole key
-  selector — add a brief hint label ("Tap the circle to select a key") until the user has
-  interacted once
-- Keep the picker but collapse it behind an "Advanced" disclosure or move it into a settings
-  sheet, so the circle is the primary affordance
-- Retain both but audit whether any key (e.g. enharmonics) is selectable via the picker but
-  not reachable by tapping the circle
-
-**Files:** `src/screens/ProgressionsScreen.tsx`
-
-**Status:** Not started — decide approach before touching code
-
----
 
 ### Color palette exploration — modernise the app's visual identity
 
@@ -606,62 +595,6 @@ inactive states clearly distinct.
 
 ---
 
-### Fretboard nut spacing — remove gap between string names and nut
-
-**What:** The gap between the string name labels (E A D G B e) and the nut line is currently
-as wide as a full fret interval. The nut should sit flush against the string names with only
-a small visual margin — the way a real guitar neck looks when viewed from the headstock end.
-
-**Files:** `src/components/GuitarNeck.tsx` (and `FretboardViewer.tsx` if it owns the label
-area)
-
-**What to do:**
-- Identify the layout constant that determines the offset of fret 0 (the nut) from the
-  left edge of the SVG
-- Reduce the label-column width / left-padding so the nut line is near-flush with the
-  string name text, leaving only a small breathing gap (e.g. 4–6 px) rather than a full
-  fret width
-- Verify the fix in both standard and left-handed orientations
-
-**Status:** Not started
-
----
-
-### 9. Persist user preferences with AsyncStorage
-
-**What:** Remember the last-used root, type, display mode, and ♯/♭ preference across app restarts.
-
-**Files:** `src/theme/ThemeContext.tsx`, individual screens or a new `usePersistentState` hook
-
-**Dependencies:** `@react-native-async-storage/async-storage`
-
----
-
-### 10. Chord quality color coding in Progressions
-
-**What:** The 7 diatonic chord cards currently use a single style. Color-coding by quality (Major=gold, Minor=blue, Dim=red) would make patterns more scannable.
-
-**Files:** `src/screens/ProgressionsScreen.tsx`, `src/theme/colors.ts`
-
----
-
-### 11. Arpeggio pattern display (sweep picking order)
-
-**What:** Arpeggios tab currently shows all arpeggio tones on the full neck. Adding a numbered sweep-picking order (1, 2, 3... across strings from lowest to highest) in "Finger" mode would be more useful for technique practice.
-
-**Files:** `src/engine/arpeggios.ts`, `src/screens/ArpeggiosScreen.tsx`
-
----
-
-### 12. Integration tests for ProgressionsScreen circle interaction
-
-**What:** The Circle of Fifths `G` elements use SVG's `onPress` prop which is not accessible via `findAllByType('TouchableOpacity')` in react-test-renderer. Testing circle interaction requires either:
-- A test wrapper that renders with a real SVG touch system, or
-- Extracting the key-change logic into a separate testable function and testing it in isolation
-
-**Files:** `src/screens/__tests__/ProgressionsScreen.test.tsx`
-
----
 
 ## Out of Scope for v1
 
