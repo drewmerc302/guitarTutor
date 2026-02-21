@@ -63,6 +63,9 @@
     },
     "transformIgnorePatterns": [
       "node_modules/(?!(react-native|@react-native|react-native-svg|@react-navigation)/)"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@expo/vector-icons(.*)$": "<rootDir>/src/__mocks__/expoVectorIcons.js"
+    }
   }
 }
