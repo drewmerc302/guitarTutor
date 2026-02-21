@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
+  label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
   hint: { fontSize: 12, marginBottom: 8 },
   numeralRow: {
     flexDirection: 'row',
