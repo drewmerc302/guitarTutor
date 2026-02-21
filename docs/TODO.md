@@ -238,6 +238,31 @@ positions. Common in jazz and advanced rock playing (e.g. 3-notes-per-string pat
 
 ## P3 — Polish & Infrastructure
 
+### Capo control UX — make capo indicator self-explanatory
+
+**What:** The current capo control in the header (`− C +`) is not discoverable. There is no
+label or icon indicating that `C` stands for capo, and the `−`/`+` buttons look like they
+could control anything. Users tapping the `C` label itself get no response since it is a
+display-only element.
+
+**Goal:** Make it immediately obvious that the control sets a capo, and make the active/
+inactive states clearly distinct.
+
+**Design options to consider:**
+- Replace the bare `C` label with a capo icon (e.g. a clamp/bar icon from MaterialCommunityIcons)
+  alongside the fret number when active
+- Show a tooltip or brief label below the control on first use (e.g. "Capo: off")
+- Use a modal or bottom sheet picker (fret 0–7) instead of `−`/`+` steppers, with a clear
+  "Capo" heading
+- Increase the `−`/`+` tap target size (currently only 6 px padding — easy to miss)
+- When capo > 0, show `Capo 3` style text instead of just `C3` so the meaning is clear
+
+**Files:** `App.tsx` (capo control in `headerRight`), possibly `src/theme/ThemeContext.tsx`
+
+**Status:** Not started — pick an approach before implementing
+
+---
+
 ### Fretboard nut spacing — remove gap between string names and nut
 
 **What:** The gap between the string name labels (E A D G B e) and the nut line is currently
