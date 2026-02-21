@@ -39,7 +39,7 @@ export function ChipPicker(props: ChipPickerProps) {
 
         return (
           <TouchableOpacity
-            key={}
+            key={`${opt}-${i}`}
             onPress={handlePress}
             accessibilityLabel={opt}
             accessibilityRole="button"
