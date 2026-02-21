@@ -238,6 +238,27 @@ positions. Common in jazz and advanced rock playing (e.g. 3-notes-per-string pat
 
 ## P3 — Polish & Infrastructure
 
+### Fretboard nut spacing — remove gap between string names and nut
+
+**What:** The gap between the string name labels (E A D G B e) and the nut line is currently
+as wide as a full fret interval. The nut should sit flush against the string names with only
+a small visual margin — the way a real guitar neck looks when viewed from the headstock end.
+
+**Files:** `src/components/GuitarNeck.tsx` (and `FretboardViewer.tsx` if it owns the label
+area)
+
+**What to do:**
+- Identify the layout constant that determines the offset of fret 0 (the nut) from the
+  left edge of the SVG
+- Reduce the label-column width / left-padding so the nut line is near-flush with the
+  string name text, leaving only a small breathing gap (e.g. 4–6 px) rather than a full
+  fret width
+- Verify the fix in both standard and left-handed orientations
+
+**Status:** Not started
+
+---
+
 ### 9. Persist user preferences with AsyncStorage
 
 **What:** Remember the last-used root, type, display mode, and ♯/♭ preference across app restarts.
