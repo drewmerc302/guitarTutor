@@ -98,12 +98,25 @@ export function ChordsScreen() {
 
   const handleNotePress = (string: number, fret: number, isRoot: boolean) => {
     if (isRoot) {
+      // First pass: exact match — find a voicing that contains this exact note position
       for (let i = 0; i < voicingRegions.length; i++) {
         if (voicingRegions[i].frets.has(`${string}-${fret}`)) {
           setActiveVoicingIndex(i);
-          break;
+          return;
         }
       }
+      // Fallback: no voicing contains this note — switch to the voicing whose root note
+      // is closest (by fret distance) to the tapped position
+      let closestIdx = -1;
+      let closestDist = Infinity;
+      for (let i = 0; i < voicingRegions.length; i++) {
+        const rf = voicingRegions[i].rootFret;
+        if (rf) {
+          const dist = Math.abs(rf.fret - fret);
+          if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+        }
+      }
+      if (closestIdx >= 0) setActiveVoicingIndex(closestIdx);
     }
   };
 
