@@ -82,7 +82,43 @@ to describe the Pentatonic Equator concept, then design and build the feature.
 
 ## P1 — High Value Improvements
 
-*(All P1 items complete — see Recently Fixed above)*
+### Responsive layout for iPad, tablet, and web
+
+**What:** The app currently targets iPhone portrait. It runs on iPadOS and web via Expo's web
+support, but the layout does not adapt to wider screens — controls have excess whitespace,
+and there is no multi-column arrangement that takes advantage of the extra real estate.
+
+**Goal:** Make the app feel native and polished on iPadOS, Android tablets, and desktop
+browsers, without breaking the existing iPhone experience.
+
+**Surfaces to support:**
+- iPhone (portrait primary, landscape secondary) — current baseline
+- iPadOS (portrait + landscape, split-screen/Stage Manager aware)
+- Android tablet (similar to iPad)
+- Web/PWA in a mobile browser (375–430 px wide) — already close
+- Web in a desktop browser (1024 px+) — needs max-width container and column layout
+
+**Design questions to resolve:**
+- Should wider layouts use a two-column arrangement (controls left, fretboard right), or
+  a single wider column with larger controls?
+- Should the Circle of Fifths and fretboard scale up proportionally or cap at a max size?
+- Do the header toggles (flats, left-hand, capo) move into a sidebar or settings panel on
+  iPad/desktop, or stay in the header?
+- Should landscape iPhone get a different layout from portrait, or the same scrollable column?
+
+**Implementation notes:**
+- Use `useWindowDimensions` breakpoints (e.g. `width >= 768` = tablet/desktop mode)
+- Wrap content in a `maxWidth` container centered on large screens
+- Picker rows (NotePicker, TypePicker) may need to switch from horizontal scroll to a
+  wrapping grid on wider screens
+- SVG components (fretboard, Circle of Fifths) already use `useWindowDimensions` — cap at
+  a sensible max (e.g. 600 px) rather than filling the full iPad width
+
+**Status:** Not started — needs brainstorming session
+
+---
+
+*(All other P1 items complete — see Recently Fixed above)*
 
 ---
 
