@@ -3,11 +3,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { NotePicker, TypePicker, DisplayToggle, FretboardViewer } from '../components';
+import { FretboardViewer } from '../components';
+import { ChipPicker } from '../components/ChipPicker';
+import { SegmentedControl } from '../components/SegmentedControl';
 import { CHORD_TYPES, getChordVoicings, buildVoicingRegions, ChordVoicing } from '../engine/chords';
 import { getNotesOnFretboard } from '../engine/fretboard';
 import { assignFingers } from '../engine/fingers';
-import { NOTE_NAMES } from '../engine/notes';
+import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 import { usePersistentState } from '../hooks/usePersistentState';
 
 function getMinFret(voicing: ChordVoicing): number {
@@ -34,7 +36,7 @@ function findClosestToNutIndex(voicings: ChordVoicing[]): number {
 }
 
 export function ChordsScreen() {
-  const { theme } = useTheme();
+  const { theme, useFlats } = useTheme();
   const [root, setRoot] = usePersistentState<number>('chords.root', 0);
   const [type, setType] = usePersistentState<string>('chords.type', 'Major');
   const [display, setDisplay] = usePersistentState<string>('chords.display', 'interval');
@@ -115,17 +117,17 @@ export function ChordsScreen() {
         </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <NotePicker activeNote={root} onSelect={handleRootChange} />
+        <ChipPicker
+          options={useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES}
+          activeOption={(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}
+          onSelect={(name) => handleRootChange((useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES).indexOf(name))}
+        />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <TypePicker types={chordTypes} activeType={type} onSelect={handleTypeChange} />
+        <ChipPicker options={chordTypes} activeOption={type} onSelect={handleTypeChange} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-        <DisplayToggle
-          modes={['Finger', 'Interval', 'Note']}
-          activeMode={display}
-          onSelect={setDisplay}
-        />
+        <SegmentedControl options={['Finger', 'Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
 
         <Text style={[styles.voicingHint, { color: theme.textMuted }]}>
           Tap a root to change voicings
@@ -160,10 +162,10 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 20,
+    marginBottom: 6,
   },
   voicingHint: {
     fontSize: 11,

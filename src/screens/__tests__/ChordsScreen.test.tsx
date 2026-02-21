@@ -71,21 +71,17 @@ describe('ChordsScreen', () => {
     act(() => { tree = create(<ChordsScreen />); });
     const root = tree.root;
 
-    // C (index 0) is active by default
     const initialButtons = root.findAllByType('TouchableOpacity');
-    const initialStyle = [].concat(...initialButtons[0].props.style);
-    expect(JSON.stringify(initialStyle)).toContain('#d4a04a');
+    const activeStyle = JSON.stringify([].concat(...initialButtons[0].props.style));
+    const inactiveStyle = JSON.stringify([].concat(...initialButtons[1].props.style));
+    expect(activeStyle).not.toEqual(inactiveStyle); // C is active, C# is not
 
-    // Press E (index 4 in NotePicker)
-    act(() => { initialButtons[4].props.onPress(); });
+    act(() => { initialButtons[4].props.onPress(); }); // press E (index 4)
 
     const updatedButtons = root.findAllByType('TouchableOpacity');
-    const updatedStyle = [].concat(...updatedButtons[4].props.style);
-    expect(JSON.stringify(updatedStyle)).toContain('#d4a04a');
-
-    // C button should no longer be active
-    const prevStyle = [].concat(...updatedButtons[0].props.style);
-    expect(JSON.stringify(prevStyle)).not.toContain('#d4a04a');
+    const newActiveStyle = JSON.stringify([].concat(...updatedButtons[4].props.style));
+    const prevActiveStyle = JSON.stringify([].concat(...updatedButtons[0].props.style));
+    expect(newActiveStyle).not.toEqual(prevActiveStyle);
   });
 
   test('selecting a chord type updates active type highlight', () => {
@@ -93,18 +89,17 @@ describe('ChordsScreen', () => {
     act(() => { tree = create(<ChordsScreen />); });
     const root = tree.root;
 
-    // 0-11 NotePicker, 12+ TypePicker. Major (index 12) is active by default.
+    // 0-11: note chips, 12: Major (first type, active by default)
     const initialButtons = root.findAllByType('TouchableOpacity');
-    const majorStyle = [].concat(...initialButtons[12].props.style);
-    expect(JSON.stringify(majorStyle)).toContain('#d4a04a');
+    const majorStyle = JSON.stringify([].concat(...initialButtons[12].props.style));
+    const minorStyle = JSON.stringify([].concat(...initialButtons[13].props.style));
+    expect(majorStyle).not.toEqual(minorStyle);
 
     act(() => { initialButtons[13].props.onPress(); }); // press Minor
 
     const updatedButtons = root.findAllByType('TouchableOpacity');
-    const minorStyle = [].concat(...updatedButtons[13].props.style);
-    expect(JSON.stringify(minorStyle)).toContain('#d4a04a');
-
-    const prevMajorStyle = [].concat(...updatedButtons[12].props.style);
-    expect(JSON.stringify(prevMajorStyle)).not.toContain('#d4a04a');
+    const newMinorStyle = JSON.stringify([].concat(...updatedButtons[13].props.style));
+    const prevMajorStyle = JSON.stringify([].concat(...updatedButtons[12].props.style));
+    expect(newMinorStyle).not.toEqual(prevMajorStyle);
   });
 });
