@@ -1,19 +1,26 @@
 // src/screens/ScalesScreen.tsx
 import React, { useState, useMemo } from 'react';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { NotePicker, TypePicker, DisplayToggle, FretboardViewer, ScalePositionPicker } from '../components';
+import { ChipPicker, SegmentedControl, FretboardViewer } from '../components';
 import { SCALE_TYPES, MODE_NAMES, applyModeRotation, computeScalePositions } from '../engine/scales';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 export function ScalesScreen() {
-  const { theme } = useTheme();
+  const { theme, useFlats } = useTheme();
   const [root, setRoot] = usePersistentState<number>('scales.root', 0);
   const [type, setType] = usePersistentState<string>('scales.type', 'Major');
   const [mode, setMode] = usePersistentState<number>('scales.mode', 0);
   const [display, setDisplay] = usePersistentState<string>('scales.display', 'interval');
   const [activePositions, setActivePositions] = useState<Set<string>>(new Set(['all']));
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  if (Platform.OS === 'android') {
+    UIManager.setLayoutAnimationEnabledExperimental?.(true);
+  }
 
   const scaleTypes = Object.keys(SCALE_TYPES);
   const is7Note = SCALE_TYPES[type]?.length === 7;
@@ -70,6 +77,26 @@ export function ScalesScreen() {
     });
   };
 
+  const positionOptions = useMemo(() => {
+    return ['All', ...positions.map((_, i) => `Pos ${i + 1}`)];
+  }, [positions]);
+
+  const activeChipOptions = useMemo((): Set<string> => {
+    if (activePositions.has('all')) return new Set(['All']);
+    return new Set(Array.from(activePositions).map(k => `Pos ${parseInt(k) + 1}`));
+  }, [activePositions]);
+
+  const handlePositionChipToggle = (opt: string) => {
+    if (opt === 'All') {
+      handlePositionToggle('all');
+    } else {
+      const idx = positionOptions.indexOf(opt) - 1; // -1 for 'All' at index 0
+      handlePositionToggle(String(idx));
+    }
+  };
+
+  const noteNames = useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -78,23 +105,52 @@ export function ScalesScreen() {
         </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <NotePicker activeNote={root} onSelect={setRoot} />
+        <ChipPicker
+          options={noteNames}
+          activeOption={noteNames[root]}
+          onSelect={(n) => setRoot(noteNames.indexOf(n))}
+        />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <TypePicker types={scaleTypes} activeType={type} onSelect={setType} />
+        <ChipPicker options={scaleTypes} activeOption={type} onSelect={setType} />
 
-        {is7Note && (
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
+        <SegmentedControl options={['Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
+
+        <TouchableOpacity
+          style={[styles.advancedToggle, { backgroundColor: theme.bgTertiary }]}
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setAdvancedOpen(v => !v);
+          }}
+          accessibilityLabel="Toggle advanced options"
+        >
+          <Text style={[styles.advancedLabel, { color: theme.textMuted }]}>Advanced</Text>
+          <MaterialCommunityIcons
+            name={advancedOpen ? 'chevron-down' : 'chevron-right'}
+            size={18}
+            color={theme.textMuted}
+          />
+        </TouchableOpacity>
+
+        {advancedOpen && is7Note && (
           <>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Mode</Text>
-            <TypePicker types={MODE_NAMES} activeType={MODE_NAMES[mode]} onSelect={(m) => setMode(MODE_NAMES.indexOf(m))} />
+            <ChipPicker
+              options={MODE_NAMES}
+              activeOption={MODE_NAMES[mode]}
+              onSelect={(m) => setMode(MODE_NAMES.indexOf(m))}
+            />
           </>
         )}
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-        <DisplayToggle modes={['Interval', 'Note']} activeMode={display} onSelect={setDisplay} />
-
         <Text style={[styles.label, { color: theme.textSecondary }]}>Position</Text>
-        <ScalePositionPicker positions={positions} activeSet={activePositions} onToggle={handlePositionToggle} />
+        <ChipPicker
+          multiSelect
+          options={positionOptions}
+          activeOptions={activeChipOptions}
+          onToggle={handlePositionChipToggle}
+        />
         <Text style={[styles.hint, { color: theme.textMuted }]}>
           A box is a scale pattern that fits within a small section of the neck. Select a numbered box to focus on that region — tap multiple to compare them side by side.
         </Text>
@@ -117,7 +173,17 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
+  label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
   neckContainer: { alignItems: 'center', marginTop: 24 },
   hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
+  advancedToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  advancedLabel: { fontSize: 14, fontWeight: '500' },
 });

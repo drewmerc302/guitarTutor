@@ -20,6 +20,19 @@ jest.mock('react-native', () => {
     Platform: { OS: 'ios', select: (obj: any) => obj.ios },
     Dimensions: { get: () => ({ width: 375, height: 812 }) },
     useWindowDimensions: () => ({ width: 375, height: 812, scale: 1, fontScale: 1 }),
+    LayoutAnimation: {
+      configureNext: jest.fn(),
+      Presets: {
+        easeInEaseOut: {},
+        linear: {},
+        spring: {},
+      },
+      Types: {},
+      Properties: {},
+    },
+    UIManager: {
+      setLayoutAnimationEnabledExperimental: jest.fn(),
+    },
   };
 });
 

@@ -9,3 +9,5 @@ export { ChordPreview } from './ChordPreview';
 export { ChordDiagram } from './ChordDiagram';
 export { StringGroupPicker } from './StringGroupPicker';
 export { ScalePositionPicker } from './ScalePositionPicker';
+export { ChipPicker } from './ChipPicker';
+export { SegmentedControl } from './SegmentedControl';
