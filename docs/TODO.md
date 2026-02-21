@@ -88,6 +88,47 @@ to describe the Pentatonic Equator concept, then design and build the feature.
 
 ## P2 — Features That Add Meaningful Functionality
 
+### Scale practice metronome with note highlighting (brainstorm needed)
+
+**What:** A simple metronome on the Scales tab that steps through the notes of the
+selected scale box in practice order — lowest note on the lowest string up to the
+highest note on the highest string, then back down — highlighting each note on the
+fretboard in sync with the beat.
+
+**Goal:** Give beginners a visual and rhythmic guide for practicing scale patterns
+in time, without needing an external metronome app.
+
+**Design questions to resolve:**
+- BPM input — simple −/+ stepper? Tap-tempo button? Slider?
+- Play/pause control placement relative to the fretboard
+- Should the highlighted note pulse or change color? Should the active dot grow?
+- Up-only, down-only, or up-then-down as selectable modes?
+- Does it loop continuously or play one pass and stop?
+- Should it respect the selected Box position filter, or always play the full scale?
+- Implementation: `setInterval` + React state, or Expo AV / `react-native-sound` for a click track?
+
+**Status:** Not started — needs brainstorming session
+
+---
+
+### Diagonal scales spanning 2 octaves (brainstorm needed)
+
+**What:** An alternative scale view on the Scales tab that shows diagonal/positional
+patterns spanning 2 octaves across the neck, rather than the standard vertical box
+positions. Common in jazz and advanced rock playing (e.g. 3-notes-per-string patterns).
+
+**Design questions to resolve:**
+- Should this be a new "Pattern" option alongside Boxes (e.g. "Boxes / Diagonal")?
+- Starting string and direction — always low E upward, or user-selectable?
+- How many 2-octave patterns exist per scale? (Typically 7 starting points for a 7-note scale)
+- How does the ScalePositionPicker UI adapt — different labels (Pattern 1–7 vs Box 1–5)?
+- Visual distinction from box positions — different highlight color or shape?
+- Does it apply to pentatonic (fewer notes per string) as well as 7-note scales?
+
+**Status:** Not started — needs brainstorming session
+
+---
+
 *(All implemented P2 items complete — see Recently Fixed above)*
 
 ### Favorites / Bookmarks — needs full design (future)
