@@ -25,6 +25,7 @@ const FB = {
   padTop: 30,
   padBottom: 30,
   fretWidth: 60,
+  openStringWidth: 20,
   stringSpacing: 28,
   dotRadius: 11,
 };
@@ -43,7 +44,7 @@ function GuitarNeckInner({
 }: GuitarNeckProps) {
   const { theme, useFlats, isLeftHanded, capo } = useTheme();
 
-  const width = FB.padLeft + (TOTAL_FRETS + 1) * FB.fretWidth + FB.padRight;
+  const width = FB.padLeft + FB.openStringWidth + TOTAL_FRETS * FB.fretWidth + FB.padRight;
   const height = FB.padTop + 5 * FB.stringSpacing + FB.padBottom;
 
   // Mirror x coordinate for left-handed mode.
@@ -67,8 +68,8 @@ function GuitarNeckInner({
         if (!note) continue;
 
         const rawX = f === 0
-          ? FB.padLeft + FB.fretWidth / 2
-          : FB.padLeft + f * FB.fretWidth + FB.fretWidth / 2;
+          ? FB.padLeft + FB.openStringWidth / 2
+          : FB.padLeft + FB.openStringWidth + (f - 1) * FB.fretWidth + FB.fretWidth / 2;
         const x = mx(rawX);
         const y = FB.padTop + s * FB.stringSpacing;
 
@@ -141,8 +142,8 @@ function GuitarNeckInner({
   const renderBoxHighlights = () => {
     const highlights: React.ReactElement[] = [];
     for (const box of boxHighlights) {
-      const x1 = FB.padLeft + box.fretStart * FB.fretWidth + (box.fretStart === 0 ? 0 : FB.fretWidth);
-      const x2 = FB.padLeft + (box.fretEnd + 1) * FB.fretWidth;
+      const x1 = box.fretStart === 0 ? FB.padLeft : FB.padLeft + FB.openStringWidth + (box.fretStart - 1) * FB.fretWidth;
+      const x2 = box.fretEnd === 0 ? FB.padLeft + FB.openStringWidth : FB.padLeft + FB.openStringWidth + box.fretEnd * FB.fretWidth;
       highlights.push(
         <Rect
           key={`box-${box.fretStart}`}
@@ -164,7 +165,7 @@ function GuitarNeckInner({
 
   const renderCapo = () => {
     if (!capo) return null;
-    const x = mx(FB.padLeft + capo * FB.fretWidth);
+    const x = mx(FB.padLeft + FB.openStringWidth + (capo - 1) * FB.fretWidth);
     const y1 = FB.padTop - 6;
     const y2 = FB.padTop + 5 * FB.stringSpacing + 6;
     return (
@@ -194,7 +195,7 @@ function GuitarNeckInner({
 
   const renderBarre = () => {
     if (!barreFret || barreFret <= 0) return null;
-    const x1 = FB.padLeft + barreFret * FB.fretWidth;
+    const x1 = FB.padLeft + FB.openStringWidth + (barreFret - 1) * FB.fretWidth;
     const x2 = x1 + FB.fretWidth;
     const y1 = FB.padTop - 8;
     const y2 = FB.padTop + 5 * FB.stringSpacing + 8;
@@ -218,7 +219,7 @@ function GuitarNeckInner({
 
     for (const f of singleInlays) {
       if (f <= TOTAL_FRETS) {
-        const x = mx(FB.padLeft + f * FB.fretWidth + FB.fretWidth / 2);
+        const x = mx(FB.padLeft + FB.openStringWidth + (f - 1) * FB.fretWidth + FB.fretWidth / 2);
         inlays.push(
           <Circle key={`inlay-${f}`} cx={x} cy={midY} r={5} fill={theme.inlayColor} />
         );
@@ -226,7 +227,7 @@ function GuitarNeckInner({
     }
     for (const f of doubleInlays) {
       if (f <= TOTAL_FRETS) {
-        const x = mx(FB.padLeft + f * FB.fretWidth + FB.fretWidth / 2);
+        const x = mx(FB.padLeft + FB.openStringWidth + (f - 1) * FB.fretWidth + FB.fretWidth / 2);
         inlays.push(
           <Circle key={`inlay-double-${f}-1`} cx={x} cy={midY - FB.stringSpacing * 1.2} r={5} fill={theme.inlayColor} />,
           <Circle key={`inlay-double-${f}-2`} cx={x} cy={midY + FB.stringSpacing * 1.2} r={5} fill={theme.inlayColor} />
@@ -246,7 +247,7 @@ function GuitarNeckInner({
           key={`string-${s}`}
           x1={mx(FB.padLeft)}
           y1={y}
-          x2={mx(FB.padLeft + (TOTAL_FRETS + 1) * FB.fretWidth)}
+          x2={mx(FB.padLeft + FB.openStringWidth + TOTAL_FRETS * FB.fretWidth)}
           y2={y}
           stroke={theme.stringColor}
           strokeWidth={thickness}
@@ -260,7 +261,7 @@ function GuitarNeckInner({
   const renderFretWires = () => {
     const wires: React.ReactElement[] = [];
     for (let f = 2; f <= TOTAL_FRETS + 1; f++) {
-      const x = mx(FB.padLeft + f * FB.fretWidth);
+      const x = mx(FB.padLeft + FB.openStringWidth + (f - 1) * FB.fretWidth);
       wires.push(
         <Line
           key={`fret-${f}`}
@@ -280,7 +281,7 @@ function GuitarNeckInner({
   const renderFretNumbers = () => {
     const numbers: React.ReactElement[] = [];
     for (let f = 1; f <= TOTAL_FRETS; f++) {
-      const x = mx(FB.padLeft + f * FB.fretWidth + FB.fretWidth / 2);
+      const x = mx(FB.padLeft + FB.openStringWidth + (f - 1) * FB.fretWidth + FB.fretWidth / 2);
       numbers.push(
         <SvgText
           key={`fret-num-${f}`}
@@ -318,7 +319,7 @@ function GuitarNeckInner({
     return labels;
   };
 
-  const nutX = mx(FB.padLeft + FB.fretWidth);
+  const nutX = mx(FB.padLeft + FB.openStringWidth);
   const bgRectX = isLeftHanded ? FB.padRight - 8 : FB.padLeft - 8;
 
   return (
@@ -333,7 +334,7 @@ function GuitarNeckInner({
       <Rect
         x={bgRectX}
         y={FB.padTop - 8}
-        width={TOTAL_FRETS * FB.fretWidth + FB.fretWidth + 16}
+        width={FB.openStringWidth + TOTAL_FRETS * FB.fretWidth + 16}
         height={5 * FB.stringSpacing + 16}
         rx={4}
         fill="url(#fretboardGrad)"
