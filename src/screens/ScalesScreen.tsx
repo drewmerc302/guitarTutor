@@ -1,5 +1,6 @@
 // src/screens/ScalesScreen.tsx
 import React, { useState, useMemo } from 'react';
+import { usePersistentState } from '../hooks/usePersistentState';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
@@ -8,10 +9,10 @@ import { SCALE_TYPES, MODE_NAMES, applyModeRotation, computeScalePositions } fro
 
 export function ScalesScreen() {
   const { theme } = useTheme();
-  const [root, setRoot] = useState(0);
-  const [type, setType] = useState('Major');
-  const [mode, setMode] = useState(0);
-  const [display, setDisplay] = useState('interval');
+  const [root, setRoot] = usePersistentState<number>('scales.root', 0);
+  const [type, setType] = usePersistentState<string>('scales.type', 'Major');
+  const [mode, setMode] = usePersistentState<number>('scales.mode', 0);
+  const [display, setDisplay] = usePersistentState<string>('scales.display', 'interval');
   const [activePositions, setActivePositions] = useState<Set<string>>(new Set(['all']));
 
   const scaleTypes = Object.keys(SCALE_TYPES);

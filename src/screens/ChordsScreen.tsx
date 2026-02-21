@@ -8,6 +8,7 @@ import { CHORD_TYPES, getChordVoicings, buildVoicingRegions, ChordVoicing } from
 import { getNotesOnFretboard } from '../engine/fretboard';
 import { assignFingers } from '../engine/fingers';
 import { NOTE_NAMES } from '../engine/notes';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 function getMinFret(voicing: ChordVoicing): number {
   let minFret = Infinity;
@@ -34,9 +35,9 @@ function findClosestToNutIndex(voicings: ChordVoicing[]): number {
 
 export function ChordsScreen() {
   const { theme } = useTheme();
-  const [root, setRoot] = useState(0);
-  const [type, setType] = useState('Major');
-  const [display, setDisplay] = useState('interval');
+  const [root, setRoot] = usePersistentState<number>('chords.root', 0);
+  const [type, setType] = usePersistentState<string>('chords.type', 'Major');
+  const [display, setDisplay] = usePersistentState<string>('chords.display', 'interval');
   const [activeVoicingIndex, setActiveVoicingIndex] = useState(0);
 
   const intervals = CHORD_TYPES[type];

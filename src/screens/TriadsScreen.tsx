@@ -3,17 +3,18 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
+import { usePersistentState } from '../hooks/usePersistentState';
 import { NotePicker, TypePicker, DisplayToggle, StringGroupPicker, FretboardViewer } from '../components';
 import { TRIAD_TYPES, computeTriadPositions } from '../engine/triads';
 import { assignFingers } from '../engine/fingers';
 
 export function TriadsScreen() {
   const { theme } = useTheme();
-  const [root, setRoot] = useState(0);
-  const [type, setType] = useState('Major');
-  const [stringGroup, setStringGroup] = useState('all');
+  const [root, setRoot] = usePersistentState<number>('triads.root', 0);
+  const [type, setType] = usePersistentState<string>('triads.type', 'Major');
+  const [stringGroup, setStringGroup] = usePersistentState<string>('triads.stringGroup', 'all');
   const [inversion, setInversion] = useState(0);
-  const [display, setDisplay] = useState('interval');
+  const [display, setDisplay] = usePersistentState<string>('triads.display', 'interval');
 
   const triadTypes = Object.keys(TRIAD_TYPES);
 
