@@ -293,6 +293,43 @@ and cognitive load without adding capability.
 
 ---
 
+### Color palette exploration — modernise the app's visual identity
+
+**What:** The current palette is functional but generic. Explore alternative color schemes
+before the P0 Visual Overhaul is implemented so there is a clear visual direction to build
+toward.
+
+**Goal:** Identify 3–5 candidate palettes with distinct personalities, prototype them as
+theme objects, and pick one (or a hybrid) to carry forward as the app's design language.
+
+**Palette directions to explore:**
+- **Modern blue** — deep navy background, bright electric-blue accent, white text; feels
+  techy and contemporary (think linear-gradient hero cards, glassy surfaces)
+- **Off-white / warm neutral** — warm cream or light grey background, charcoal text, muted
+  amber or teal accent; clean, approachable, textbook-like
+- **Modern iOS** — ultra-light system background (`#F2F2F7`), SF-style grouped card rows,
+  system blue (`#007AFF`) accent, heavy use of separators and rounded rect cards
+- **Dark premium** — near-black background (`#0A0A0F`), gold or rose-gold accent, subtle
+  gradient surfaces; feels like a pro music tool
+- **Fretboard-inspired** — warm wood tones for backgrounds, ivory fret markers, brass/
+  nickel string colors as accents; thematic to the instrument
+
+**How to run this:**
+1. Ask Claude to generate 3–5 complete theme objects (light + dark variant each) in
+   `src/theme/colors.ts` style
+2. Wire each as a selectable theme in a throwaway dev branch
+3. Screenshot each on a real device or simulator across 2–3 tabs
+4. Pick a direction and document it as the target palette in the design doc
+
+**Note:** Closely related to the P0 Visual Overhaul — run this exploration first so the
+brainstorming session has concrete palette options to anchor decisions.
+
+**Files:** `src/theme/colors.ts`, `src/theme/ThemeContext.tsx`
+
+**Status:** Not started
+
+---
+
 ### UX audit — new guitar student persona review
 
 **What:** Have Claude read through the full codebase and adopt the persona of a beginner
