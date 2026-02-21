@@ -2,12 +2,10 @@
 import React from 'react';
 import { create, act } from 'react-test-renderer';
 import { ChordsScreen } from '../ChordsScreen';
-
-// Helper: find the FretboardViewer node by its unique prop signature
-function findFretboardViewer(root: any): any {
-  const nodes = root.findAll((n: any) => n.props.onNotePress !== undefined && n.props.activeVoicing !== undefined);
-  return nodes[0];
-}
+import { FretboardViewer as _FretboardViewer } from '../../components';
+// React.memo wraps FretboardViewerInner; react-test-renderer stores the inner
+// function as the fiber type, so findByType requires the unwrapped component.
+const FretboardViewer = (_FretboardViewer as any).type as typeof _FretboardViewer;
 
 describe('ChordsScreen', () => {
   test('renders without crashing', () => {
@@ -119,11 +117,11 @@ describe('ChordsScreen', () => {
 
     // First activate the E-shape voicing (string 0, fret 8 is IN the CMaj7 E-shape voicing)
     // This gives us a known starting voicing (the higher-up-the-neck E-shape)
-    const fvInit = findFretboardViewer(tree.root);
+    const fvInit = tree.root.findByType(FretboardViewer);
     act(() => { fvInit.props.onNotePress(0, 8, true); });
 
     // Capture the E-shape voicing as our "before" state
-    const fvBefore = findFretboardViewer(tree.root);
+    const fvBefore = tree.root.findByType(FretboardViewer);
     const voicingBefore = JSON.stringify([...(fvBefore.props.activeVoicing as Set<string>)].sort());
 
     // Now press C at string 2 (G string), fret 5 — a valid C note NOT in any CMaj7 voicing's fret set.
@@ -133,7 +131,7 @@ describe('ChordsScreen', () => {
     // After fix: fallback picks closest rootFret → switches to open voicing → PASSES
     act(() => { fvBefore.props.onNotePress(2, 5, true); });
 
-    const fvAfter = findFretboardViewer(tree.root);
+    const fvAfter = tree.root.findByType(FretboardViewer);
     const voicingAfter = JSON.stringify([...(fvAfter.props.activeVoicing as Set<string>)].sort());
 
     expect(voicingAfter).not.toBe(voicingBefore);
@@ -144,7 +142,7 @@ describe('ChordsScreen', () => {
     act(() => { tree = create(<ChordsScreen />); });
     const fingerBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Finger')[0];
     act(() => { fingerBtn.props.onPress(); });
-    const fv = findFretboardViewer(tree.root);
+    const fv = tree.root.findByType(FretboardViewer);
     expect(fv.props.displayMode).toBe('finger');
   });
 
@@ -153,24 +151,24 @@ describe('ChordsScreen', () => {
     act(() => { tree = create(<ChordsScreen />); });
     const noteBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Note')[0];
     act(() => { noteBtn.props.onPress(); });
-    const fv = findFretboardViewer(tree.root);
+    const fv = tree.root.findByType(FretboardViewer);
     expect(fv.props.displayMode).toBe('note');
   });
 
   test('display mode Interval is default', () => {
     let tree: any;
     act(() => { tree = create(<ChordsScreen />); });
-    const fv = findFretboardViewer(tree.root);
+    const fv = tree.root.findByType(FretboardViewer);
     expect(fv.props.displayMode).toBe('interval');
   });
 
   test('onNotePress with isRoot=false does not change voicing', () => {
     let tree: any;
     act(() => { tree = create(<ChordsScreen />); });
-    const fvBefore = findFretboardViewer(tree.root);
+    const fvBefore = tree.root.findByType(FretboardViewer);
     const voicingBefore = JSON.stringify([...(fvBefore.props.activeVoicing as Set<string>)].sort());
     act(() => { fvBefore.props.onNotePress(2, 5, false); });
-    const fvAfter = findFretboardViewer(tree.root);
+    const fvAfter = tree.root.findByType(FretboardViewer);
     const voicingAfter = JSON.stringify([...(fvAfter.props.activeVoicing as Set<string>)].sort());
     expect(voicingAfter).toBe(voicingBefore);
   });
