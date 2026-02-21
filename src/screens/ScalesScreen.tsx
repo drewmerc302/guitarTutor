@@ -95,6 +95,9 @@ export function ScalesScreen() {
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Position</Text>
         <ScalePositionPicker positions={positions} activeSet={activePositions} onToggle={handlePositionToggle} />
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          A box is a scale pattern that fits within a small section of the neck. Select a numbered box to focus on that region — tap multiple to compare them side by side.
+        </Text>
 
         <View style={styles.neckContainer}>
           <FretboardViewer
@@ -116,4 +119,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
   neckContainer: { alignItems: 'center', marginTop: 24 },
+  hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
 });

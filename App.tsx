@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useWindowDimensions } from 'react-native';
+import { useWindowDimensions, Modal } from 'react-native';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { ChordsScreen } from './src/screens/ChordsScreen';
 import { ScalesScreen } from './src/screens/ScalesScreen';
 import { ProgressionsScreen } from './src/screens/ProgressionsScreen';
 import { TriadsScreen } from './src/screens/TriadsScreen';
 import { ArpeggiosScreen } from './src/screens/ArpeggiosScreen';
+import { GlossaryScreen } from './src/screens/GlossaryScreen';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ErrorBoundary } from './src/components';
@@ -29,6 +30,7 @@ function AppNavigator() {
   const { theme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, setCapo } = useTheme();
   const { width } = useWindowDimensions();
   const isCompact = width < 380;
+  const [glossaryVisible, setGlossaryVisible] = useState(false);
 
   return (
     <>
@@ -51,6 +53,18 @@ function AppNavigator() {
             headerRight: () => (
               <View style={styles.headerButtons}>
                 <TouchableOpacity
+                  onPress={() => setGlossaryVisible(true)}
+                  style={styles.headerBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open glossary"
+                >
+                  <MaterialCommunityIcons
+                    name="book-open-variant"
+                    size={20}
+                    color={theme.textMuted}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
                   onPress={toggleLeftHanded}
                   style={styles.headerBtn}
                   accessibilityRole="button"
@@ -70,7 +84,7 @@ function AppNavigator() {
                     <Text style={[styles.capoBtnText, { color: theme.textSecondary }]}>-</Text>
                   </TouchableOpacity>
                   <Text style={[styles.capoLabel, { color: capo > 0 ? theme.accent : theme.textMuted }]}>
-                    {capo > 0 ? `C${capo}` : 'C'}
+                    {capo > 0 ? `Capo ${capo}` : 'Capo'}
                   </Text>
                   <TouchableOpacity
                     onPress={() => setCapo(Math.min(7, capo + 1))}
@@ -104,6 +118,7 @@ function AppNavigator() {
               </View>
             ),
             headerTintColor: theme.accent,
+            tabBarShowLabel: true,
             tabBarStyle: {
               backgroundColor: theme.bgSecondary,
               borderTopColor: theme.border,
@@ -163,6 +178,15 @@ function AppNavigator() {
           />
         </Tab.Navigator>
       </NavigationContainer>
+
+      <Modal
+        visible={glossaryVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setGlossaryVisible(false)}
+      >
+        <GlossaryScreen onClose={() => setGlossaryVisible(false)} />
+      </Modal>
     </>
   );
 }
@@ -202,16 +226,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   capoBtn: {
-    padding: 6,
+    padding: 8,
   },
   capoBtnText: {
     fontSize: 18,
     fontWeight: '600',
   },
   capoLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    minWidth: 22,
+    minWidth: 46,
     textAlign: 'center',
   },
 });

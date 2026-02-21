@@ -41,6 +41,11 @@ export function ArpeggiosScreen() {
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
         <DisplayToggle modes={['Interval', 'Note', 'Finger']} activeMode={display} onSelect={setDisplay} />
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          {display === 'finger'
+            ? 'Numbers show the order to play each note. Start at 1 and sweep across strings in one smooth stroke (sweep picking).'
+            : 'An arpeggio is a chord played one note at a time. Switch to Finger view to see the sweep-picking order.'}
+        </Text>
 
         <View style={styles.neckContainer}>
           <FretboardViewer
@@ -59,5 +64,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  neckContainer: { alignItems: 'center', marginTop: 24 },
+  neckContainer: { alignItems: 'center', marginTop: 16 },
+  hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
 });

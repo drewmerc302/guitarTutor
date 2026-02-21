@@ -231,6 +231,7 @@ export function ProgressionsScreen() {
         </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Diatonic Chords</Text>
+        <Text style={[styles.hint, { color: theme.textMuted }]}>These 7 chords all belong to the key of {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}. Tap any to add it to your progression.</Text>
         <View style={styles.numeralRow}>
           {diatonicChords.map((chord, index) => {
             const isActive = progression.includes(index);
@@ -250,6 +251,9 @@ export function ProgressionsScreen() {
               >
                 <Text style={[styles.numeralText, { color: isActive ? theme.accent : theme.textMuted }]}>
                   {chord.numeral}
+                </Text>
+                <Text style={[styles.numeralChordName, { color: isActive ? theme.textPrimary : theme.textSecondary }]}>
+                  {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[chord.root]}{chord.quality === 'Minor' ? 'm' : chord.quality === 'Dim' ? '°' : ''}
                 </Text>
               </TouchableOpacity>
             );
@@ -330,6 +334,11 @@ const styles = StyleSheet.create({
   numeralText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  numeralChordName: {
+    fontSize: 9,
+    fontWeight: '500',
+    marginTop: 2,
   },
   progressionRow: {
     flexDirection: 'row',

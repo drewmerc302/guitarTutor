@@ -72,6 +72,9 @@ export function TriadsScreen() {
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
         <DisplayToggle modes={['Finger', 'Interval', 'Note']} activeMode={display} onSelect={setDisplay} />
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          A triad is a 3-note chord (root, 3rd, 5th) — the building block of all larger chords. Try different string groups and inversions to find the shape nearest to where you're already playing.
+        </Text>
 
         <View style={styles.neckContainer}>
           <FretboardViewer
@@ -91,5 +94,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  neckContainer: { alignItems: 'center', marginTop: 24 },
+  neckContainer: { alignItems: 'center', marginTop: 16 },
+  hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
 });
