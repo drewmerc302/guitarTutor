@@ -238,6 +238,28 @@ positions. Common in jazz and advanced rock playing (e.g. 3-notes-per-string pat
 
 ## P3 — Polish & Infrastructure
 
+### Progressions tab — consider removing the 12-note key picker
+
+**What:** The Progressions tab has a `NotePicker` row (12 chromatic note buttons) at the top
+to select the key. The Circle of Fifths below it already lets the user tap any note to set
+the same key, making the picker largely redundant. The duplicate control adds vertical height
+and cognitive load without adding capability.
+
+**Options to consider:**
+- Remove the `NotePicker` row entirely and rely on the Circle of Fifths as the sole key
+  selector — add a brief hint label ("Tap the circle to select a key") until the user has
+  interacted once
+- Keep the picker but collapse it behind an "Advanced" disclosure or move it into a settings
+  sheet, so the circle is the primary affordance
+- Retain both but audit whether any key (e.g. enharmonics) is selectable via the picker but
+  not reachable by tapping the circle
+
+**Files:** `src/screens/ProgressionsScreen.tsx`
+
+**Status:** Not started — decide approach before touching code
+
+---
+
 ### Capo control UX — make capo indicator self-explanatory
 
 **What:** The current capo control in the header (`− C +`) is not discoverable. There is no
