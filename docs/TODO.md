@@ -4,6 +4,63 @@
 
 ---
 
+## Roadmap — Next Steps by Proximity to Task
+
+### Ready to code — no design work needed
+
+These have a clear problem and a known fix. Pick one and start.
+
+| Item | Scope |
+|---|---|
+| **Fretboard nut spacing** — nut sits a full fret-width from string names | Small — one constant in `GuitarNeck.tsx` |
+| **Progressions key picker** — remove redundant 12-note selector (circle does the same job) | Small — delete from `ProgressionsScreen.tsx` |
+| **Chord quality color coding** — color diatonic buttons Major/Minor/Dim | Small — `ProgressionsScreen.tsx` + `colors.ts` |
+| **Arpeggio sweep order** — number notes in Finger mode | Medium — `arpeggios.ts` + `ArpeggiosScreen.tsx` |
+| **Persist user preferences** — remember root/type/display across restarts | Medium — `ThemeContext.tsx` |
+| **Integration tests** — Circle of Fifths SVG press untestable | Medium — `ProgressionsScreen.test.tsx` |
+
+---
+
+### Ready to start — needs a brainstorm first, but no prior decision required
+
+These are well-defined enough to brainstorm in a single session and then implement.
+
+| Item | Brainstorm focus |
+|---|---|
+| **Capo control UX** — `C` label not discoverable, tiny tap targets | Pick: icon, modal picker, or label change |
+| **Common progression presets** — I–IV–V, ii–V–I, etc. auto-populate the row | Pick: chip strip vs modal, replace vs append |
+| **Scale practice metronome** — highlight notes in beat order | Pick: BPM input style, loop behaviour, animation |
+| **Diagonal 2-octave scales** — alternative to box positions | Pick: toggle UI, pattern count, visual style |
+| **Favorites / Bookmarks** — save root+type+mode combinations | Pick: navigation model, storage scope, UI |
+| **Scale tab notation** — show scale as guitar tab numbers | Pick: scroll vs grid, which positions shown |
+| **Chord transition helper** — highlight shared/moving fingers between two chords | Pick: where it lives, color model |
+| **UX audit** — beginner persona walkthrough | Run: read codebase, compile findings to `docs/ux-audit.md` |
+
+---
+
+### Dependent on a prior decision — brainstorm the dependency first
+
+These items can't be fully designed until a larger architectural question is resolved.
+
+| Item | Blocked on |
+|---|---|
+| **Settings screen** — gear icon, dedicated settings page | P0 Visual Overhaul brainstorm |
+| **Responsive layout** — iPad, tablet, desktop | P0 Visual Overhaul brainstorm (layout system) |
+| **Color palette exploration** — 3–5 candidate themes | Run *before* Visual Overhaul brainstorm (informs it) |
+| **P0 Visual Overhaul** — cohesive design across all tabs | Color palette + UX audit should precede this |
+| **Pentatonic Equator mode** — Mayer's alternative box system | User needs to describe the method first |
+
+---
+
+### Suggested order if starting fresh
+
+1. Knock out the ready-to-code small items (nut spacing, key picker removal, chord colors)
+2. Run the UX audit and color palette exploration in parallel
+3. Use those findings to fuel the Visual Overhaul brainstorm
+4. Settings screen and responsive layout flow naturally out of that
+
+---
+
 ## Recently Fixed (2026-02-20)
 
 - ✅ ScalePositionPicker 3+3 grid — uniform `width: 33%` on all 6 buttons; [All/Box1/Box2] / [Box3/Box4/Box5] layout
