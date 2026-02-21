@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useWindowDimensions, Modal } from 'react-native';
+import { useWindowDimensions, Modal, ScrollView } from 'react-native';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { ChordsScreen } from './src/screens/ChordsScreen';
 import { ScalesScreen } from './src/screens/ScalesScreen';
@@ -14,6 +14,7 @@ import { GlossaryScreen } from './src/screens/GlossaryScreen';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ErrorBoundary } from './src/components';
+import { PALETTE_NAMES, PALETTES, PaletteName } from './src/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
@@ -25,6 +26,43 @@ const withErrorBoundary = (Screen: React.ComponentType, label: string) =>
       </ErrorBoundary>
     );
   };
+
+/** Thin horizontal strip shown above the tab bar for switching palettes. */
+function PaletteSwitcher() {
+  const { theme, isDark, palette, setPalette } = useTheme();
+
+  return (
+    <View style={[paletteSwitcherStyles.container, { backgroundColor: theme.bgSecondary, borderTopColor: theme.border }]}>
+      <Text style={[paletteSwitcherStyles.label, { color: theme.textMuted }]}>PALETTE</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={paletteSwitcherStyles.row}>
+        {PALETTE_NAMES.map((name) => {
+          const isActive = name === palette;
+          const accentColor = isDark ? PALETTES[name].dark.accent : PALETTES[name].light.accent;
+          return (
+            <TouchableOpacity
+              key={name}
+              onPress={() => setPalette(name as PaletteName)}
+              style={[
+                paletteSwitcherStyles.chip,
+                {
+                  backgroundColor: isActive ? theme.bgElevated : theme.bgTertiary,
+                  borderColor: isActive ? theme.accent : theme.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Switch to ${name} palette`}
+            >
+              <View style={[paletteSwitcherStyles.swatch, { backgroundColor: accentColor }]} />
+              <Text style={[paletteSwitcherStyles.chipText, { color: isActive ? theme.textPrimary : theme.textSecondary }]}>
+                {name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
 
 function AppNavigator() {
   const { theme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, setCapo } = useTheme();
@@ -179,6 +217,9 @@ function AppNavigator() {
         </Tab.Navigator>
       </NavigationContainer>
 
+      {/* Palette switcher — dev-only, floats above the tab bar */}
+      <PaletteSwitcher />
+
       <Modal
         visible={glossaryVisible}
         animationType="slide"
@@ -237,5 +278,49 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     minWidth: 46,
     textAlign: 'center',
+  },
+});
+
+const paletteSwitcherStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 80,           // sits just above the tab bar
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    zIndex: 100,
+  },
+  label: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginRight: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  swatch: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  chipText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

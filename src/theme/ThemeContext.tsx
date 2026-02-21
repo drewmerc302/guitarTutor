@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { darkTheme, lightTheme, ThemeColors } from './colors';
+import { darkTheme, ThemeColors, PALETTES, PALETTE_NAMES, PaletteName } from './colors';
 
 interface ThemeContextType {
   theme: ThemeColors;
@@ -14,6 +14,8 @@ interface ThemeContextType {
   toggleLeftHanded: () => void;
   capo: number;
   setCapo: (n: number) => void;
+  palette: PaletteName;
+  setPalette: (name: PaletteName) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
@@ -26,6 +28,8 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleLeftHanded: () => {},
   capo: 0,
   setCapo: () => {},
+  palette: 'Original',
+  setPalette: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -34,23 +38,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [useFlats, setUseFlats] = useState(false);
   const [isLeftHanded, setIsLeftHanded] = useState(false);
   const [capo, setCapo] = useState(0);
+  const [palette, setPaletteState] = useState<PaletteName>('Original');
 
   const isDark = override !== null ? override : systemScheme !== 'light';
 
-  // Track whether the initial load from AsyncStorage has completed so that
-  // save effects do not persist default values before the real persisted
-  // values have been applied.
   const mounted = useRef(false);
 
-  // Load all preferences from AsyncStorage on mount.
   useEffect(() => {
     (async () => {
       try {
-        const [rawDark, rawFlats, rawLeftHanded, rawCapo] = await Promise.all([
+        const [rawDark, rawFlats, rawLeftHanded, rawCapo, rawPalette] = await Promise.all([
           AsyncStorage.getItem('pref_isDark'),
           AsyncStorage.getItem('pref_useFlats'),
           AsyncStorage.getItem('pref_isLeftHanded'),
           AsyncStorage.getItem('pref_capo'),
+          AsyncStorage.getItem('pref_palette'),
         ]);
 
         if (rawDark !== null) {
@@ -65,6 +67,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (rawCapo !== null) {
           setCapo(JSON.parse(rawCapo) as number);
         }
+        if (rawPalette !== null) {
+          const p = JSON.parse(rawPalette) as PaletteName;
+          if (PALETTE_NAMES.includes(p)) setPaletteState(p);
+        }
       } catch {
         // Storage failures are silently ignored; defaults remain in effect.
       } finally {
@@ -73,29 +79,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // Persist `override` (the isDark override) whenever it changes.
   useEffect(() => {
     if (!mounted.current) return;
     AsyncStorage.setItem('pref_isDark', JSON.stringify(override)).catch(() => {});
   }, [override]);
 
-  // Persist `useFlats` whenever it changes.
   useEffect(() => {
     if (!mounted.current) return;
     AsyncStorage.setItem('pref_useFlats', JSON.stringify(useFlats)).catch(() => {});
   }, [useFlats]);
 
-  // Persist `isLeftHanded` whenever it changes.
   useEffect(() => {
     if (!mounted.current) return;
     AsyncStorage.setItem('pref_isLeftHanded', JSON.stringify(isLeftHanded)).catch(() => {});
   }, [isLeftHanded]);
 
-  // Persist `capo` whenever it changes.
   useEffect(() => {
     if (!mounted.current) return;
     AsyncStorage.setItem('pref_capo', JSON.stringify(capo)).catch(() => {});
   }, [capo]);
+
+  useEffect(() => {
+    if (!mounted.current) return;
+    AsyncStorage.setItem('pref_palette', JSON.stringify(palette)).catch(() => {});
+  }, [palette]);
 
   const toggleTheme = useCallback(() => {
     setOverride(prev => prev === null ? !isDark : !prev);
@@ -109,8 +116,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setIsLeftHanded(prev => !prev);
   }, []);
 
+  const setPalette = useCallback((name: PaletteName) => {
+    setPaletteState(name);
+  }, []);
+
+  const activeTheme = useMemo(() => {
+    const pair = PALETTES[palette] ?? PALETTES['Original'];
+    return isDark ? pair.dark : pair.light;
+  }, [isDark, palette]);
+
   const value = useMemo(() => ({
-    theme: isDark ? darkTheme : lightTheme,
+    theme: activeTheme,
     isDark,
     toggleTheme,
     useFlats,
@@ -119,7 +135,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     toggleLeftHanded,
     capo,
     setCapo,
-  }), [isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo]);
+    palette,
+    setPalette,
+  }), [activeTheme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, palette, setPalette]);
 
   return (
     <ThemeContext.Provider value={value}>
