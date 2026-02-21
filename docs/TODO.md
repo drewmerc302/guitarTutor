@@ -293,6 +293,40 @@ and cognitive load without adding capability.
 
 ---
 
+### UX audit — new guitar student persona review
+
+**What:** Have Claude read through the full codebase and adopt the persona of a beginner
+guitar student opening the app for the first time. From that perspective, identify what is
+intuitive, what is confusing, what is missing, and what small changes would have the highest
+usability impact.
+
+**Goal:** Surface blind spots that are hard to see when you are deep in the implementation.
+The output is a secondary candidate list of UX improvements to be evaluated for inclusion in
+the main TODO on a case-by-case basis — not an automatic promotion.
+
+**Scope of the review:**
+- First-launch experience: is it obvious what each tab does?
+- Each tab in isolation: can a beginner figure out what to do without instructions?
+- Header controls: are LH, capo, ♯/♭, and theme discoverable and self-explanatory?
+- Navigation: is the bottom tab order logical for a learning journey?
+- Fretboard: are the note dots, interval labels, and finger numbers legible and meaningful
+  to someone who has never seen them before?
+- Progressions: is the relationship between the diatonic row, the progression builder, and
+  the Circle of Fifths clear?
+- Terminology: are labels like "Interval", "Box 1", "Sus4", "vii°" explained anywhere?
+
+**How to run this:**
+1. Ask Claude to read all screen files, component files, and the engine layer
+2. Prompt: "You are a beginner guitar student who has just downloaded this app. Walk through
+   each tab and tell me what you find intuitive, what confuses you, and what you wish the app
+   explained or did differently."
+3. Claude compiles findings into `docs/ux-audit-YYYY-MM-DD.md`
+4. Review the findings together and promote worthy items to the main TODO
+
+**Status:** Not started
+
+---
+
 ### Settings screen — move header controls behind a gear icon
 
 **What:** The header currently exposes LH, capo (− C +), ♯/♭, and dark/light mode controls
