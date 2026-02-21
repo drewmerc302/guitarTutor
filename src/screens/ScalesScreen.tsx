@@ -158,7 +158,7 @@ export function ScalesScreen() {
         <View style={styles.neckContainer}>
           <FretboardViewer
             notes={isAllActive ? positions.flatMap(p => p.notes) : Array.from(activePositions).flatMap(key => positions[parseInt(key)]?.notes || [])}
-            displayMode={display as 'finger' | 'interval' | 'note'}
+            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
             activeNoteSet={activeNoteSet}
             boxHighlights={boxHighlights}
           />
