@@ -1,6 +1,21 @@
 # Guitar Tutor — TODO & Feature Ideas
 
-**Last updated:** 2026-02-21
+**Last updated:** 2026-02-21 (session 2)
+
+---
+
+## Bugs — Found 2026-02-21
+
+These are confirmed defects. No design work needed — just fix them.
+
+| # | Screen | Bug |
+|---|--------|-----|
+| 1 | Triads | **2nd Inv blank fretboard** — Strings 1-2-3 + "2nd Inv" shows empty neck between frets 5–10; the triad actually starts at fret 12 but the scroll target points to the wrong region |
+| 2 | Triads | **All Strings defaults to 8th fret** — entering the tab with "All Strings" selected scrolls to the 8th-fret root note instead of the nut; should always default to showing the nut end |
+| 3 | Scales | **Advanced section unresponsive** — after selecting root A → Minor Pentatonic → Pos 1, tapping "Advanced" does nothing (LayoutAnimation state likely not resetting on position change) |
+| 4 | Scales | **Note/Interval display wipes fretboard labels** — switching to Note or Interval removes all dot labels; navigating away and back does not restore them; requires app kill |
+| 5 | Chords | **Dimmed root note unresponsive** — e.g. C Maj7: the greyed-out root on the 5th fret does nothing when tapped (should cycle voicings or show info) |
+| 6 | Settings | **Display section rows non-interactive** — all three rows under "Display" (Note names, Hand, Theme) show a grey bar at the end and do nothing when tapped; SegmentedControl likely not rendering correctly in that context |
 
 ---
 
@@ -8,7 +23,7 @@
 
 ### Ready to code — no design work needed
 
-✅ **All items in this category are complete** (as of 2026-02-21).
+✅ **All items in this category are complete** (as of 2026-02-21). Bugs table above contains new ready-to-code items.
 
 | Item | Status |
 |---|---|
@@ -35,6 +50,9 @@ These are well-defined enough to brainstorm in a single session and then impleme
 | **Scale tab notation** — show scale as guitar tab numbers | Pick: scroll vs grid, which positions shown |
 | **Chord transition helper** — highlight shared/moving fingers between two chords | Pick: where it lives, color model |
 | **UX audit** — beginner persona walkthrough | Run: read codebase, compile findings to `docs/ux-audit.md` |
+| **Chords root picker — 7-note + ♯/♭ toggle** — replace the 12-note horizontal scroll with the 7 natural notes (A B C D E F G); add ♯ and ♭ symbol buttons next to the "Root" label that instantly shift all 7 buttons to their sharp/flat equivalents | Pick: toggle style (two symbols vs segmented control), whether accidentals hide naturals or show both |
+| **Arpeggios display rethink** — current view highlights all notes at once making the fretboard confusing; need a new approach that makes the arpeggio shape and sweep order clear at a glance | Brainstorm: single-string-at-a-time animation, step-through mode, or note-by-note reveal |
+| **Integration test suite** — full button-level tests verifying every interactive control on every screen does what it should (tap Note → labels change, tap Box 1 → fretboard scrolls, etc.) | Pick: scope (all screens or critical paths only), CI integration |
 
 ---
 
@@ -49,6 +67,7 @@ These items can't be fully designed until a larger architectural question is res
 | **Color palette exploration** — 3–5 candidate themes | Run *before* Visual Overhaul brainstorm (informs it) |
 | **P0 Visual Overhaul** — cohesive design across all tabs | Color palette + UX audit should precede this |
 | **Pentatonic Equator mode** — Mayer's alternative box system | User needs to describe the method first |
+| **Scales: Diagonal + Equator selector** — add a new selector between Type and Display with "Standard \| Diagonal \| JM Pent Equator"; Diagonal shows a 2-octave ascending run from low-E root; Equator shows Mayer's equator system | Depends on Pentatonic Equator brainstorm above; Diagonal spec is in P2 below |
 
 ---
 
@@ -440,7 +459,9 @@ correct diatonic chords in the right order, transposed to the selected key.
 
 **Goal:** Reduce the number of taps needed for a beginner to see and practice a real-world
 progression, and serve as a teaching tool by labelling each preset with its common name and
-genre context (e.g. "I–IV–V — Blues/Rock", "I–V–vi–IV — Pop").
+genre context (e.g. "I–IV–V — Blues/Rock", "I–V–vi–IV — Pop"). Each preset should also
+include a tappable "Famous songs using this" link that expands to show the top 5 most
+well-known songs that use the progression, listed with the key they're commonly played in.
 
 **Design questions to resolve:**
 - UI placement: a scrollable horizontal chip strip above the progression row? A modal/sheet
