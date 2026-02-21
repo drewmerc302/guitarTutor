@@ -3,20 +3,27 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Text as SvgText, G } from 'react-native-svg';
+import { usePersistentState } from '../hooks/usePersistentState';
 import { useTheme } from '../theme/ThemeContext';
 import { getChordQualityColor } from '../theme/colors';
-import { NotePicker, ChordDiagram } from '../components';
+import { ChordDiagram } from '../components';
 import { getDiatonicChords, CIRCLE_OF_FIFTHS } from '../engine/progressions';
 import { getChordVoicings, ChordVoicing } from '../engine/chords';
 import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 export function ProgressionsScreen() {
   const { theme, useFlats, isDark } = useTheme();
-  const [root, setRoot] = useState(0);
+  const [root, setRoot] = usePersistentState<number>('progressions.root', 0);
   // Each entry is a diatonic chord index; duplicates allowed
   const [progression, setProgression] = useState<number[]>([]);
 
   const diatonicChords = useMemo(() => getDiatonicChords(root), [root]);
+
+  // Called when the user taps a note on the Circle of Fifths to change the key
+  const handleKeySelect = (note: number) => {
+    setRoot(note);
+    setProgression([]);
+  };
 
   // Always appends the chord index to the progression (allows duplicates)
   const appendChord = (index: number) => {
@@ -104,7 +111,7 @@ export function ProgressionsScreen() {
             <G key={i}>
               {/* Outer: major key node — tapping selects this key */}
               <G
-                onPress={() => { setRoot(note); setProgression([]); }}
+                onPress={() => handleKeySelect(note)}
                 accessibilityRole="button"
                 accessibilityLabel={`Select ${noteNames[note]} as key`}
               >
@@ -223,9 +230,6 @@ export function ProgressionsScreen() {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Progressions</Text>
         </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Key</Text>
-        <NotePicker activeNote={root} onSelect={(note) => { setRoot(note); setProgression([]); }} />
-
         <Text style={[styles.label, { color: theme.textSecondary }]}>Diatonic Chords</Text>
         <View style={styles.numeralRow}>
           {diatonicChords.map((chord, index) => {
@@ -233,6 +237,7 @@ export function ProgressionsScreen() {
             return (
               <TouchableOpacity
                 key={index}
+                testID="diatonic-btn"
                 style={[
                   styles.numeralButton,
                   {
@@ -261,6 +266,7 @@ export function ProgressionsScreen() {
             return (
               <TouchableOpacity
                 key={pos}
+                testID="progression-card"
                 onPress={() => removeChordAtPos(pos)}
                 style={[
                   styles.progressionCard,
@@ -292,6 +298,7 @@ export function ProgressionsScreen() {
 
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Circle of Fifths</Text>
+        <Text style={[styles.hint, { color: theme.textMuted }]}>Tap the circle to change key</Text>
         <View style={styles.circleContainer}>
           {renderCircleOfFifths()}
         </View>
@@ -306,6 +313,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
+  hint: { fontSize: 12, marginBottom: 8 },
   numeralRow: {
     flexDirection: 'row',
     gap: 4,
