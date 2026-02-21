@@ -261,6 +261,8 @@ genre context (e.g. "I–IV–V — Blues/Rock", "I–V–vi–IV — Pop").
 - Should selecting a preset replace the current progression or append to it?
 - Should the user still be able to manually edit the progression after applying a preset?
 - How does 12-bar blues (12 chords) fit in the wrapping progression row layout?
+- Should a new `src/engine/progressionPresets.ts` file own the preset definitions (name,
+  genre label, numeral sequence), keeping the screen component free of data?
 
 **Files:** `src/screens/ProgressionsScreen.tsx`, possibly a new
 `src/engine/progressionPresets.ts` for the preset definitions
