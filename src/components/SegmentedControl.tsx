@@ -17,7 +17,7 @@ export function SegmentedControl({ options, activeOption, onSelect }: SegmentedC
         const isActive = opt === activeOption;
         return (
           <TouchableOpacity
-            key={opt}
+            key={`${opt}-${i}`}
             onPress={() => onSelect(opt)}
             style={[
               styles.segment,
@@ -26,6 +26,7 @@ export function SegmentedControl({ options, activeOption, onSelect }: SegmentedC
             ]}
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
+            accessibilityLabel={opt}
           >
             <Text
               style={[
