@@ -57,27 +57,9 @@ describe('ScalesScreen', () => {
 
   test('Mode picker appears after expanding Advanced (with 7-note scale)', () => {
     let tree: any;
-    act(() => { tree = create(<ScalesScreen />); }); // Major is default (7-note)
-    const buttons = tree.root.findAllByType('TouchableOpacity');
-
-    // Try to find the Advanced button by accessibilityLabel first
-    let advancedPressed = false;
-    for (let i = 0; i < buttons.length; i++) {
-      if (buttons[i].props.accessibilityLabel === 'Toggle advanced options') {
-        act(() => { buttons[i].props.onPress(); });
-        advancedPressed = true;
-        break;
-      }
-    }
-
-    // Fallback: press each button until Ionian appears
-    if (!advancedPressed) {
-      for (let i = 0; i < buttons.length; i++) {
-        try { act(() => { buttons[i].props.onPress(); }); } catch {}
-        if (JSON.stringify(tree.toJSON()).includes('Ionian')) break;
-      }
-    }
-
+    act(() => { tree = create(<ScalesScreen />); });
+    const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
+    act(() => { advBtns[0].props.onPress(); });
     expect(JSON.stringify(tree.toJSON())).toContain('Ionian');
   });
 
@@ -123,7 +105,7 @@ describe('ScalesScreen', () => {
     act(() => { tree = create(<ScalesScreen />); });
     const pos1Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Pos 1');
     act(() => { pos1Btns[0].props.onPress(); });
-    const FV = (require('../../components').FretboardViewer as any).type;
+    const FV = (_FV as any).type;
     const fv = tree.root.findByType(FV);
     expect(fv.props.boxHighlights.length).toBeGreaterThan(0);
   });
@@ -135,7 +117,7 @@ describe('ScalesScreen', () => {
     const pos2Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Pos 2');
     act(() => { pos1Btns[0].props.onPress(); });
     act(() => { pos2Btns[0].props.onPress(); });
-    const FV = (require('../../components').FretboardViewer as any).type;
+    const FV = (_FV as any).type;
     const fv = tree.root.findByType(FV);
     expect(fv.props.boxHighlights.length).toBe(2);
   });
@@ -146,7 +128,7 @@ describe('ScalesScreen', () => {
     const pos1Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Pos 1');
     act(() => { pos1Btns[0].props.onPress(); }); // activate Pos 1
     act(() => { pos1Btns[0].props.onPress(); }); // deactivate → reverts to All
-    const FV = (require('../../components').FretboardViewer as any).type;
+    const FV = (_FV as any).type;
     const fv = tree.root.findByType(FV);
     expect(fv.props.boxHighlights).toEqual([]); // All mode = no highlights
   });
