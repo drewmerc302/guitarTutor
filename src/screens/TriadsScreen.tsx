@@ -10,6 +10,10 @@ import { TRIAD_TYPES, computeTriadPositions } from '../engine/triads';
 import { assignFingers } from '../engine/fingers';
 import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
+
 export function TriadsScreen() {
   const { theme, useFlats } = useTheme();
   const [root, setRoot] = usePersistentState<number>('triads.root', 0);
@@ -18,10 +22,6 @@ export function TriadsScreen() {
   const [inversion, setInversion] = useState(0);
   const [display, setDisplay] = usePersistentState<string>('triads.display', 'interval');
   const [advancedOpen, setAdvancedOpen] = useState(false);
-
-  if (Platform.OS === 'android') {
-    UIManager.setLayoutAnimationEnabledExperimental?.(true);
-  }
 
   const STRING_GROUP_OPTIONS = [
     { label: 'All strings', value: 'all' },
@@ -49,7 +49,7 @@ export function TriadsScreen() {
   }, [root, intervals, stringGroups, inversion]);
 
   const displayNotes = useMemo(() => {
-    if (display === 'finger') {
+    if (display.toLowerCase() === 'finger') {
       const notesCopy = [...notes];
       assignFingers(notesCopy);
       return notesCopy;
@@ -128,7 +128,7 @@ export function TriadsScreen() {
         <View style={styles.neckContainer}>
           <FretboardViewer
             notes={displayNotes}
-            displayMode={display as 'finger' | 'interval' | 'note'}
+            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
             boxHighlights={boxHighlights}
           />
         </View>

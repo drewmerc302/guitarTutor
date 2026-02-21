@@ -69,7 +69,7 @@ export function ChordsScreen() {
   }, [activeVoicing]);
 
   const displayNotes = useMemo(() => {
-    if (display === 'finger' && activeVoicing) {
+    if (display.toLowerCase() === 'finger' && activeVoicing) {
       const fingerNotes = allNotes.filter(n => activeVoicingSet.has(`${n.string}-${n.fret}`));
       assignFingers(fingerNotes);
       const fingerMap: Record<string, number> = {};
@@ -135,7 +135,7 @@ export function ChordsScreen() {
         <View style={styles.neckContainer}>
           <FretboardViewer
             notes={displayNotes}
-            displayMode={display as 'finger' | 'interval' | 'note'}
+            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
             activeVoicing={activeVoicingSet}
             hasVoicings={true}
             onNotePress={handleNotePress}

@@ -47,15 +47,15 @@ export function ArpeggiosScreen() {
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
         <SegmentedControl options={['Interval', 'Note', 'Finger']} activeOption={display} onSelect={setDisplay} />
         <Text style={[styles.hint, { color: theme.textMuted }]}>
-          {display === 'finger'
+          {display.toLowerCase() === 'finger'
             ? 'Numbers show the order to play each note. Start at 1 and sweep across strings in one smooth stroke (sweep picking).'
             : 'An arpeggio is a chord played one note at a time. Switch to Finger view to see the sweep-picking order.'}
         </Text>
 
         <View style={styles.neckContainer}>
           <FretboardViewer
-            notes={display === 'finger' ? sweepNotes : notes}
-            displayMode={display as 'finger' | 'interval' | 'note'}
+            notes={display.toLowerCase() === 'finger' ? sweepNotes : notes}
+            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
           />
         </View>
       </ScrollView>

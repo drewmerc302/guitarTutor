@@ -9,6 +9,10 @@ import { SCALE_TYPES, MODE_NAMES, applyModeRotation, computeScalePositions } fro
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
+
 export function ScalesScreen() {
   const { theme, useFlats } = useTheme();
   const [root, setRoot] = usePersistentState<number>('scales.root', 0);
@@ -17,10 +21,6 @@ export function ScalesScreen() {
   const [display, setDisplay] = usePersistentState<string>('scales.display', 'interval');
   const [activePositions, setActivePositions] = useState<Set<string>>(new Set(['all']));
   const [advancedOpen, setAdvancedOpen] = useState(false);
-
-  if (Platform.OS === 'android') {
-    UIManager.setLayoutAnimationEnabledExperimental?.(true);
-  }
 
   const scaleTypes = Object.keys(SCALE_TYPES);
   const is7Note = SCALE_TYPES[type]?.length === 7;
@@ -117,6 +117,17 @@ export function ScalesScreen() {
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
         <SegmentedControl options={['Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
 
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Position</Text>
+        <ChipPicker
+          multiSelect
+          options={positionOptions}
+          activeOptions={activeChipOptions}
+          onToggle={handlePositionChipToggle}
+        />
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          A box is a scale pattern that fits within a small section of the neck. Select a numbered box to focus on that region — tap multiple to compare them side by side.
+        </Text>
+
         <TouchableOpacity
           style={[styles.advancedToggle, { backgroundColor: theme.bgTertiary }]}
           onPress={() => {
@@ -143,17 +154,6 @@ export function ScalesScreen() {
             />
           </>
         )}
-
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Position</Text>
-        <ChipPicker
-          multiSelect
-          options={positionOptions}
-          activeOptions={activeChipOptions}
-          onToggle={handlePositionChipToggle}
-        />
-        <Text style={[styles.hint, { color: theme.textMuted }]}>
-          A box is a scale pattern that fits within a small section of the neck. Select a numbered box to focus on that region — tap multiple to compare them side by side.
-        </Text>
 
         <View style={styles.neckContainer}>
           <FretboardViewer
