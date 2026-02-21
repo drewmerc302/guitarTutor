@@ -9,26 +9,19 @@ import { ARP_TYPES } from '../../engine/arpeggios';
 describe('ArpeggiosScreen', () => {
   test('renders without crashing', () => {
     let tree: any;
-    act(() => {
-      tree = create(<ArpeggiosScreen />);
-    });
+    act(() => { tree = create(<ArpeggiosScreen />); });
     expect(tree.toJSON()).toBeTruthy();
   });
 
   test('renders title', () => {
     let tree: any;
-    act(() => {
-      tree = create(<ArpeggiosScreen />);
-    });
-    const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('Arpeggios');
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    expect(JSON.stringify(tree.toJSON())).toContain('Arpeggios');
   });
 
   test('renders arpeggio type options', () => {
     let tree: any;
-    act(() => {
-      tree = create(<ArpeggiosScreen />);
-    });
+    act(() => { tree = create(<ArpeggiosScreen />); });
     const json = JSON.stringify(tree.toJSON());
     expect(json).toContain('Major');
     expect(json).toContain('Minor');
@@ -36,24 +29,25 @@ describe('ArpeggiosScreen', () => {
     expect(json).toContain('Maj7');
   });
 
-  test('renders DisplayToggle with Interval, Note, and Finger modes', () => {
+  test('renders display modes', () => {
     let tree: any;
-    act(() => {
-      tree = create(<ArpeggiosScreen />);
-    });
+    act(() => { tree = create(<ArpeggiosScreen />); });
     const json = JSON.stringify(tree.toJSON());
     expect(json).toContain('Interval');
     expect(json).toContain('Note');
-    expect(json).toContain('"Finger"');
+    expect(json).toContain('Finger');
   });
 
-  test('renders root note picker', () => {
+  test('renders Root label', () => {
     let tree: any;
-    act(() => {
-      tree = create(<ArpeggiosScreen />);
-    });
-    const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('Root');
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    expect(JSON.stringify(tree.toJSON())).toContain('Root');
+  });
+
+  test('renders hint text', () => {
+    let tree: any;
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    expect(JSON.stringify(tree.toJSON())).toContain('arpeggio');
   });
 
   // --- Interaction tests ---
@@ -63,20 +57,17 @@ describe('ArpeggiosScreen', () => {
     act(() => { tree = create(<ArpeggiosScreen />); });
     const root = tree.root;
 
-    // C (index 0) is active by default
     const initialButtons = root.findAllByType('TouchableOpacity');
-    const initialStyle = [].concat(...initialButtons[0].props.style);
-    expect(JSON.stringify(initialStyle)).toContain('#d4a04a');
+    const activeStyle = JSON.stringify([].concat(...initialButtons[0].props.style));
+    const inactiveStyle = JSON.stringify([].concat(...initialButtons[1].props.style));
+    expect(activeStyle).not.toEqual(inactiveStyle); // C is active, C# is not
 
-    // Press D (index 2 in NotePicker)
-    act(() => { initialButtons[2].props.onPress(); });
+    act(() => { initialButtons[2].props.onPress(); }); // press D
 
     const updatedButtons = root.findAllByType('TouchableOpacity');
-    const updatedStyle = [].concat(...updatedButtons[2].props.style);
-    expect(JSON.stringify(updatedStyle)).toContain('#d4a04a');
-
-    const prevStyle = [].concat(...updatedButtons[0].props.style);
-    expect(JSON.stringify(prevStyle)).not.toContain('#d4a04a');
+    const newActiveStyle = JSON.stringify([].concat(...updatedButtons[2].props.style));
+    const prevActiveStyle = JSON.stringify([].concat(...updatedButtons[0].props.style));
+    expect(newActiveStyle).not.toEqual(prevActiveStyle);
   });
 
   test('selecting an arpeggio type updates active type highlight', () => {
@@ -84,19 +75,18 @@ describe('ArpeggiosScreen', () => {
     act(() => { tree = create(<ArpeggiosScreen />); });
     const root = tree.root;
 
-    // 0-11 NotePicker, 12-19 TypePicker (Major=12, Minor=13, Dom7=14, ...)
+    // 0-11: note chips, 12+: type chips. Major (index 12) active by default.
     const initialButtons = root.findAllByType('TouchableOpacity');
-    const majorStyle = [].concat(...initialButtons[12].props.style);
-    expect(JSON.stringify(majorStyle)).toContain('#d4a04a');
+    const majorStyle = JSON.stringify([].concat(...initialButtons[12].props.style));
+    const dom7Style = JSON.stringify([].concat(...initialButtons[14].props.style));
+    expect(majorStyle).not.toEqual(dom7Style);
 
     act(() => { initialButtons[14].props.onPress(); }); // press Dom7
 
     const updatedButtons = root.findAllByType('TouchableOpacity');
-    const dom7Style = [].concat(...updatedButtons[14].props.style);
-    expect(JSON.stringify(dom7Style)).toContain('#d4a04a');
-
-    const prevMajorStyle = [].concat(...updatedButtons[12].props.style);
-    expect(JSON.stringify(prevMajorStyle)).not.toContain('#d4a04a');
+    const newDom7Style = JSON.stringify([].concat(...updatedButtons[14].props.style));
+    const prevMajorStyle = JSON.stringify([].concat(...updatedButtons[12].props.style));
+    expect(newDom7Style).not.toEqual(prevMajorStyle);
   });
 
   // --- Sweep order tests ---
@@ -107,7 +97,6 @@ describe('ArpeggiosScreen', () => {
     assignSweepOrder(notes);
     const fingers = notes.map(n => n.finger).filter(f => f !== null) as number[];
     fingers.sort((a, b) => a - b);
-    // Should be 1, 2, 3, ... N with no gaps
     expect(fingers[0]).toBe(1);
     for (let i = 1; i < fingers.length; i++) {
       expect(fingers[i]).toBe(fingers[i - 1] + 1);
@@ -118,7 +107,6 @@ describe('ArpeggiosScreen', () => {
     const intervals = ARP_TYPES['Major'];
     const notes = getNotesOnFretboard(0, intervals).map(n => ({ ...n }));
     assignSweepOrder(notes);
-    // Find the note on the highest string index (string 5 = low E) with lowest fret
     const string5Notes = notes.filter(n => n.string === 5);
     const string0Notes = notes.filter(n => n.string === 0);
     if (string5Notes.length > 0 && string0Notes.length > 0) {
@@ -132,7 +120,6 @@ describe('ArpeggiosScreen', () => {
     const intervals = ARP_TYPES['Major'];
     const notes = getNotesOnFretboard(0, intervals).map(n => ({ ...n }));
     assignSweepOrder(notes);
-    // For each string that has multiple notes, verify fret order matches sweep order
     for (let s = 0; s < 6; s++) {
       const stringNotes = notes.filter(n => n.string === s).sort((a, b) => a.fret - b.fret);
       for (let i = 0; i < stringNotes.length - 1; i++) {

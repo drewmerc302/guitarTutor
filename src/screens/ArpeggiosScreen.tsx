@@ -4,13 +4,14 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { NotePicker, TypePicker, DisplayToggle, FretboardViewer } from '../components';
+import { ChipPicker, SegmentedControl, FretboardViewer } from '../components';
 import { ARP_TYPES } from '../engine/arpeggios';
 import { getNotesOnFretboard } from '../engine/fretboard';
 import { assignSweepOrder } from '../engine/fingers';
+import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 export function ArpeggiosScreen() {
-  const { theme } = useTheme();
+  const { theme, useFlats } = useTheme();
   const [root, setRoot] = usePersistentState<number>('arpeggios.root', 0);
   const [type, setType] = usePersistentState<string>('arpeggios.type', 'Major');
   const [display, setDisplay] = usePersistentState<string>('arpeggios.display', 'interval');
@@ -34,13 +35,17 @@ export function ArpeggiosScreen() {
         </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <NotePicker activeNote={root} onSelect={setRoot} />
+        <ChipPicker
+          options={useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES}
+          activeOption={(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}
+          onSelect={(n) => setRoot((useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES).indexOf(n))}
+        />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <TypePicker types={arpTypes} activeType={type} onSelect={setType} />
+        <ChipPicker options={arpTypes} activeOption={type} onSelect={setType} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-        <DisplayToggle modes={['Interval', 'Note', 'Finger']} activeMode={display} onSelect={setDisplay} />
+        <SegmentedControl options={['Interval', 'Note', 'Finger']} activeOption={display} onSelect={setDisplay} />
         <Text style={[styles.hint, { color: theme.textMuted }]}>
           {display === 'finger'
             ? 'Numbers show the order to play each note. Start at 1 and sweep across strings in one smooth stroke (sweep picking).'
@@ -63,7 +68,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
+  label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
   neckContainer: { alignItems: 'center', marginTop: 16 },
   hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
 });
