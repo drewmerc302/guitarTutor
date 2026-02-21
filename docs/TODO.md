@@ -293,6 +293,39 @@ and cognitive load without adding capability.
 
 ---
 
+### Settings screen — move header controls behind a gear icon
+
+**What:** The header currently exposes LH, capo (− C +), ♯/♭, and dark/light mode controls
+directly in the nav bar. As the app grows, cramming more global options into the header will
+become untenable. Moving most of these into a dedicated Settings screen behind a gear icon
+would clean up the main views, make each option more legible with a proper label, and open
+room for future preferences without cluttering every tab.
+
+**Goal:** A tappable ⚙ icon in the header opens a Settings screen (modal sheet or full
+screen) containing all global preferences, leaving the header minimal. Capo may stay in the
+header as a session-level control that guitarists toggle frequently mid-practice.
+
+**Design questions to resolve:**
+- Which controls move to Settings vs stay in the header?
+  - Likely to Settings: ♯/♭, LH mode, dark/light theme
+  - Likely to stay: capo (frequent, session-scoped) — or does it also move?
+- Settings UI style: a modal bottom sheet, a slide-over panel, or a full navigation screen?
+- Should settings be grouped with labels (e.g. "Display", "Playback", "Accessibility")?
+- Does moving LH and ♯/♭ out of the header affect discoverability for new users, and if so
+  how do we mitigate that (e.g. a first-launch nudge)?
+- Future settings that could live here: alternate tunings, default tab per launch, font size,
+  color-blind-friendly note palette
+
+**Files:** `App.tsx` (header), new `src/screens/SettingsScreen.tsx`,
+`src/theme/ThemeContext.tsx`
+
+**Note:** This item is closely related to the P0 Visual Overhaul — consider tackling them
+together in the same brainstorming session.
+
+**Status:** Not started — needs brainstorming session
+
+---
+
 ### Capo control UX — make capo indicator self-explanatory
 
 **What:** The current capo control in the header (`− C +`) is not discoverable. There is no
