@@ -238,6 +238,37 @@ positions. Common in jazz and advanced rock playing (e.g. 3-notes-per-string pat
 
 ## P3 — Polish & Infrastructure
 
+### Progressions tab — common progression presets
+
+**What:** Let the user pick from a library of well-known chord progressions (e.g. I–V–vi–IV,
+I–IV–V, ii–V–I, 12-bar blues) and have the progression row populate automatically with the
+correct diatonic chords in the right order, transposed to the selected key.
+
+**Goal:** Reduce the number of taps needed for a beginner to see and practice a real-world
+progression, and serve as a teaching tool by labelling each preset with its common name and
+genre context (e.g. "I–IV–V — Blues/Rock", "I–V–vi–IV — Pop").
+
+**Design questions to resolve:**
+- UI placement: a scrollable horizontal chip strip above the progression row? A modal/sheet
+  picker? A dropdown?
+- How many presets to include in v1? Suggested starting set:
+  - I–IV–V (blues, country, rock)
+  - I–V–vi–IV (pop)
+  - I–vi–IV–V (50s / doo-wop)
+  - ii–V–I (jazz)
+  - I–IV–ii–V (turnaround)
+  - 12-bar blues (I–I–I–I / IV–IV–I–I / V–IV–I–V)
+- Should selecting a preset replace the current progression or append to it?
+- Should the user still be able to manually edit the progression after applying a preset?
+- How does 12-bar blues (12 chords) fit in the wrapping progression row layout?
+
+**Files:** `src/screens/ProgressionsScreen.tsx`, possibly a new
+`src/engine/progressionPresets.ts` for the preset definitions
+
+**Status:** Not started — needs brainstorming session
+
+---
+
 ### Progressions tab — consider removing the 12-note key picker
 
 **What:** The Progressions tab has a `NotePicker` row (12 chromatic note buttons) at the top
