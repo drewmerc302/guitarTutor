@@ -5,6 +5,7 @@ import { ArpeggiosScreen } from '../ArpeggiosScreen';
 import { assignSweepOrder } from '../../engine/fingers';
 import { getNotesOnFretboard } from '../../engine/fretboard';
 import { ARP_TYPES } from '../../engine/arpeggios';
+import { FretboardViewer as _FV } from '../../components';
 
 describe('ArpeggiosScreen', () => {
   test('renders without crashing', () => {
@@ -126,5 +127,50 @@ describe('ArpeggiosScreen', () => {
         expect(stringNotes[i].finger).toBeLessThan(stringNotes[i + 1].finger!);
       }
     }
+  });
+
+  // --- Display mode tests ---
+
+  test('Finger display mode passes "finger" to FretboardViewer', () => {
+    let tree: any;
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    const fingerBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Finger')[0];
+    act(() => { fingerBtn.props.onPress(); });
+    const FV = (_FV as any).type;
+    const fv = tree.root.findByType(FV);
+    expect(fv.props.displayMode).toBe('finger');
+  });
+
+  test('Note display mode passes "note" to FretboardViewer', () => {
+    let tree: any;
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    const noteBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Note')[0];
+    act(() => { noteBtn.props.onPress(); });
+    const FV = (_FV as any).type;
+    const fv = tree.root.findByType(FV);
+    expect(fv.props.displayMode).toBe('note');
+  });
+
+  test('Interval display mode is default', () => {
+    let tree: any;
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    const FV = (_FV as any).type;
+    const fv = tree.root.findByType(FV);
+    expect(fv.props.displayMode).toBe('interval');
+  });
+
+  test('Finger mode renders sweep-picking hint text', () => {
+    let tree: any;
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    const fingerBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Finger')[0];
+    act(() => { fingerBtn.props.onPress(); });
+    expect(JSON.stringify(tree.toJSON())).toContain('sweep');
+  });
+
+  test('non-Finger mode renders general arpeggio hint text', () => {
+    let tree: any;
+    act(() => { tree = create(<ArpeggiosScreen />); });
+    // Default is Interval
+    expect(JSON.stringify(tree.toJSON())).toContain('chord played one note at a time');
   });
 });
