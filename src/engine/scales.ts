@@ -82,14 +82,14 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     forwardStarts.push(current);
   }
 
-  // Wrap boxes that would exceed fret 15 back toward nut
+  // Wrap boxes that start after fret 12 back toward nut to fill lower frets
   const validStarts: number[] = [];
   const wrappedStarts: number[] = [];
   let searchFrom = baseRootE;
   
   for (const s of forwardStarts) {
-    if (s > 15) {
-      // This box would be too high - wrap it back toward nut
+    if (s > 12) {
+      // This box is in upper half - wrap it back toward nut
       const prev = prevBoxStart(searchFrom);
       if (prev !== null) {
         wrappedStarts.push(prev);
