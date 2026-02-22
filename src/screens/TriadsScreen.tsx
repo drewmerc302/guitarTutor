@@ -58,12 +58,17 @@ export function TriadsScreen() {
   }, [notes, display]);
 
   const boxHighlights = useMemo(() => {
+    // Bug 2 fix: 'All Strings' shows all positions combined — don't force a scroll region
+    if (stringGroup === 'all') return [];
     const frets = notes.map(n => n.fret).filter(f => f > 0);
-    if (frets.length === 0) return [];
+    // Bug 1 fix: notes exist but all at fret 0 — send a sentinel to scroll to nut
+    if (frets.length === 0) {
+      return notes.length > 0 ? [{ fretStart: 0, fretEnd: 0 }] : [];
+    }
     const minFret = Math.min(...frets);
     const maxFret = Math.max(...frets);
     return [{ fretStart: minFret, fretEnd: maxFret }];
-  }, [notes]);
+  }, [notes, stringGroup]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
