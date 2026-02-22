@@ -7,13 +7,14 @@ interface SegmentedControlProps {
   activeOption: string;
   onSelect: (option: string) => void;
   style?: ViewStyle;
+  minWidth?: number;
 }
 
-export function SegmentedControl({ options, activeOption, onSelect, style }: SegmentedControlProps) {
+export function SegmentedControl({ options, activeOption, onSelect, style, minWidth }: SegmentedControlProps) {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.container, { borderColor: theme.border }, style]}>
+    <View style={[styles.container, { borderColor: theme.border }, minWidth ? { width: minWidth } : null, style]}>
       {options.map((opt, i) => {
         const isActive = opt === activeOption;
         return (
@@ -22,6 +23,7 @@ export function SegmentedControl({ options, activeOption, onSelect, style }: Seg
             onPress={() => onSelect(opt)}
             style={[
               styles.segment,
+              minWidth ? { width: minWidth / options.length } : null,
               i < options.length - 1 && [styles.segmentBorder, { borderRightColor: theme.border }],
               { backgroundColor: isActive ? theme.accent : theme.bgTertiary },
             ]}
