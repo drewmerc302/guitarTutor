@@ -115,7 +115,7 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     ? [...allStartsAsc.slice(rootIdx), ...allStartsAsc.slice(0, rootIdx)]
     : allStartsAsc;
 
-  // Build ScalePosition objects
+  // Build ScalePosition objects - first pass: original boxes
   const positions: ScalePosition[] = [];
   for (let i = 0; i < allStarts.length; i++) {
     const startFret = allStarts[i];
@@ -143,6 +143,37 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
       label: `Box ${i + 1}`,
       fretStart: startFret,
       fretEnd: endFret,
+      notes: boxNotes,
+    });
+  }
+
+  // Second pass: add octave repeats (+12 frets) if they fit on the fretboard
+  for (let i = 0; i < allStarts.length; i++) {
+    const startFret = allStarts[i] + 12;
+    if (startFret + 3 > TOTAL_FRETS) continue;
+    
+    const boxNotes: FretboardNote[] = [];
+    for (let s = 0; s < 6; s++) {
+      for (let f = startFret; f <= Math.min(startFret + 3, TOTAL_FRETS); f++) {
+        const noteValue = (STANDARD_TUNING[s] + f) % 12;
+        const fromRoot = (noteValue - root + 12) % 12;
+        if (intervalSet.has(fromRoot)) {
+          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
+          boxNotes.push({
+            string: s, fret: f, note: noteValue, interval: fromRoot,
+            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
+            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
+          });
+        }
+      }
+    }
+
+    assignFingers(boxNotes);
+
+    positions.push({
+      label: `Box ${i + 1}`,
+      fretStart: startFret,
+      fretEnd: startFret + 3,
       notes: boxNotes,
     });
   }

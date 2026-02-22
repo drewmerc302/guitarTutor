@@ -65,18 +65,10 @@ function FretboardViewerInner(props: FretboardViewerProps) {
         scrollViewRef.current?.scrollTo({ x: scrollX, animated: true });
       }, 0);
     } else if (canScroll && scrollViewRef.current && props.notes && props.notes.length > 0) {
-      // When no specific box highlights (e.g., "All" selected), scroll to center of all notes
-      const frets = props.notes.map(n => n.fret).filter(f => f >= 0);
-      if (frets.length > 0) {
-        const minFret = Math.min(...frets);
-        const maxFret = Math.max(...frets);
-        const centerFret = (minFret + maxFret) / 2;
-        const centerX = FB.padLeft + centerFret * FB.fretWidth;
-        const scrollX = Math.max(0, centerX - screenWidth / 2);
-        setTimeout(() => {
-          scrollViewRef.current?.scrollTo({ x: scrollX, animated: true });
-        }, 0);
-      }
+      // When no specific box highlights (e.g., "All" selected), scroll to nut (fret 0)
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+      }, 0);
     }
   }, [canScroll, screenWidth, props.boxHighlights, props.notes]);
 
