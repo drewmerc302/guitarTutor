@@ -1,21 +1,21 @@
 # Guitar Tutor — TODO & Feature Ideas
 
-**Last updated:** 2026-02-21 (session 2)
+**Last updated:** 2026-02-22 (session 3)
 
 ---
 
 ## Bugs — Found 2026-02-21
 
-These are confirmed defects. No design work needed — just fix them.
+All 6 confirmed defects fixed as of 2026-02-22. Integration tests added for each.
 
-| # | Screen | Bug |
-|---|--------|-----|
-| 1 | Triads | **2nd Inv blank fretboard** — Strings 1-2-3 + "2nd Inv" shows empty neck between frets 5–10; the triad actually starts at fret 12 but the scroll target points to the wrong region |
-| 2 | Triads | **All Strings defaults to 8th fret** — entering the tab with "All Strings" selected scrolls to the 8th-fret root note instead of the nut; should always default to showing the nut end |
-| 3 | Scales | **Advanced section unresponsive** — after selecting root A → Minor Pentatonic → Pos 1, tapping "Advanced" does nothing (LayoutAnimation state likely not resetting on position change) |
-| 4 | Scales | **Note/Interval display wipes fretboard labels** — switching to Note or Interval removes all dot labels; navigating away and back does not restore them; requires app kill |
-| 5 | Chords | **Dimmed root note unresponsive** — e.g. C Maj7: the greyed-out root on the 5th fret does nothing when tapped (should cycle voicings or show info) |
-| 6 | Settings | **Display section rows non-interactive** — all three rows under "Display" (Note names, Hand, Theme) show a grey bar at the end and do nothing when tapped; SegmentedControl likely not rendering correctly in that context |
+| # | Screen | Bug | Status |
+|---|--------|-----|--------|
+| 1 | Triads | **2nd Inv blank fretboard** — Strings 1-2-3 + "2nd Inv" shows empty neck between frets 5–10 | ✅ Fixed — `0609629` |
+| 2 | Triads | **All Strings defaults to 8th fret** — entering the tab with "All Strings" selected scrolls to the 8th-fret root note instead of the nut | ✅ Fixed — `0609629` |
+| 3 | Scales | **Advanced section unresponsive** — after selecting root A → Minor Pentatonic → Pos 1, tapping "Advanced" does nothing | ⚠️ Native-only (LayoutAnimation no-op in Jest) — regression test added `1c789fb` |
+| 4 | Scales | **Note/Interval display wipes fretboard labels** — switching to Note or Interval removes all dot labels; requires app kill | ✅ Fixed — `1c789fb` |
+| 5 | Chords | **Dimmed root note unresponsive** — e.g. C Maj7: the greyed-out root on the 5th fret does nothing when tapped | ✅ Fixed — `3635c51` |
+| 6 | Settings | **Display section rows non-interactive** — all three rows under "Display" show a grey bar and do nothing when tapped | ✅ Fixed — `831f487` |
 
 ---
 
@@ -23,7 +23,7 @@ These are confirmed defects. No design work needed — just fix them.
 
 ### Ready to code — no design work needed
 
-✅ **All items in this category are complete** (as of 2026-02-21). Bugs table above contains new ready-to-code items.
+✅ **All items in this category are complete** (as of 2026-02-22). Bugs table above is also fully resolved.
 
 | Item | Status |
 |---|---|
@@ -32,7 +32,7 @@ These are confirmed defects. No design work needed — just fix them.
 | **Chord quality color coding** — color diatonic buttons Major/Minor/Dim | ✅ Done (pre-existing) |
 | **Arpeggio sweep order** — number notes in Finger mode | ✅ Done — `b8092b1` |
 | **Persist user preferences** — remember root/type/display across restarts | ✅ Done — `346615b` |
-| **Integration tests** — Circle of Fifths SVG press untestable | ✅ Done — engine-level tests added |
+| **Integration tests** — full button-level tests + 6 bug-catching red-green pairs | ✅ Done — `23103e8` and predecessors |
 
 ---
 
@@ -40,19 +40,19 @@ These are confirmed defects. No design work needed — just fix them.
 
 These are well-defined enough to brainstorm in a single session and then implement.
 
-| Item | Brainstorm focus |
+| Item | Status |
 |---|---|
-| **Capo control UX** — `C` label not discoverable, tiny tap targets | Pick: icon, modal picker, or label change |
+| **Capo control UX** — `C` label not discoverable, tiny tap targets | ✅ Done — label → "Capo"/"Capo N", wider tap targets — `49c6381` |
+| **UX audit** — beginner persona walkthrough | ✅ Done — `docs/ux-audit-2026-02-21.md` — `49c6381` |
+| **Integration test suite** — full button-level tests for all screens + 6 bug-catching pairs | ✅ Done — `23103e8` and predecessors |
 | **Common progression presets** — I–IV–V, ii–V–I, etc. auto-populate the row | Pick: chip strip vs modal, replace vs append |
 | **Scale practice metronome** — highlight notes in beat order | Pick: BPM input style, loop behaviour, animation |
 | **Diagonal 2-octave scales** — alternative to box positions | Pick: toggle UI, pattern count, visual style |
 | **Favorites / Bookmarks** — save root+type+mode combinations | Pick: navigation model, storage scope, UI |
 | **Scale tab notation** — show scale as guitar tab numbers | Pick: scroll vs grid, which positions shown |
 | **Chord transition helper** — highlight shared/moving fingers between two chords | Pick: where it lives, color model |
-| **UX audit** — beginner persona walkthrough | Run: read codebase, compile findings to `docs/ux-audit.md` |
-| **Chords root picker — 7-note + ♯/♭ toggle** — replace the 12-note horizontal scroll with the 7 natural notes (A B C D E F G); add ♯ and ♭ symbol buttons next to the "Root" label that instantly shift all 7 buttons to their sharp/flat equivalents | Pick: toggle style (two symbols vs segmented control), whether accidentals hide naturals or show both |
-| **Arpeggios display rethink** — current view highlights all notes at once making the fretboard confusing; need a new approach that makes the arpeggio shape and sweep order clear at a glance | Brainstorm: single-string-at-a-time animation, step-through mode, or note-by-note reveal |
-| **Integration test suite** — full button-level tests verifying every interactive control on every screen does what it should (tap Note → labels change, tap Box 1 → fretboard scrolls, etc.) | Pick: scope (all screens or critical paths only), CI integration |
+| **Chords root picker — 7-note + ♯/♭ toggle** — replace the 12-note horizontal scroll with the 7 natural notes | Pick: toggle style (two symbols vs segmented control), whether accidentals hide naturals or show both |
+| **Arpeggios display rethink** — current view highlights all notes at once making the fretboard confusing | Brainstorm: single-string-at-a-time animation, step-through mode, or note-by-note reveal |
 
 ---
 
@@ -60,23 +60,44 @@ These are well-defined enough to brainstorm in a single session and then impleme
 
 These items can't be fully designed until a larger architectural question is resolved.
 
-| Item | Blocked on |
+| Item | Status |
 |---|---|
-| **Settings screen** — gear icon, dedicated settings page | P0 Visual Overhaul brainstorm |
-| **Responsive layout** — iPad, tablet, desktop | P0 Visual Overhaul brainstorm (layout system) |
-| **Color palette exploration** — 3–5 candidate themes | Run *before* Visual Overhaul brainstorm (informs it) |
-| **P0 Visual Overhaul** — cohesive design across all tabs | Color palette + UX audit should precede this |
-| **Pentatonic Equator mode** — Mayer's alternative box system | User needs to describe the method first |
-| **Scales: Diagonal + Equator selector** — add a new selector between Type and Display with "Standard \| Diagonal \| JM Pent Equator"; Diagonal shows a 2-octave ascending run from low-E root; Equator shows Mayer's equator system | Depends on Pentatonic Equator brainstorm above; Diagonal spec is in P2 below |
+| **Settings screen** — gear icon, dedicated settings page | ✅ Done — `b03d330`, `194886f` |
+| **Color palette exploration** — 3–5 candidate themes | ✅ Done — 5 palettes + live switcher — `4ac7a34` |
+| **P0 Visual Overhaul** — cohesive design across all tabs | ✅ Done — `b03d330`, `194886f`, `7c352ea`, `7ccf6e0`, `383434f`, `8336bd3`, `eb3e85a`, `5d0c513`, `711df4b`, `4ce83c4` |
+| **Responsive layout** — iPad, tablet, desktop | Not started — needs brainstorming session |
+| **Pentatonic Equator mode** — Mayer's alternative box system | Not started — user needs to describe the method first |
+| **Scales: Diagonal + Equator selector** | Depends on Pentatonic Equator brainstorm above |
 
 ---
 
 ### Suggested order going forward
 
 1. ~~Knock out the ready-to-code small items~~ ✅ Done
-2. Run the UX audit and color palette exploration in parallel
-3. Use those findings to fuel the Visual Overhaul brainstorm
-4. Settings screen and responsive layout flow naturally out of that
+2. ~~Run the UX audit and color palette exploration in parallel~~ ✅ Done
+3. ~~Use those findings to fuel the Visual Overhaul brainstorm~~ ✅ Done
+4. ~~Settings screen flows naturally out of that~~ ✅ Done
+5. Responsive layout (iPad/tablet/desktop) — next major milestone
+6. Pentatonic Equator mode — needs user description first
+
+---
+
+## Recently Fixed (2026-02-22)
+
+- ✅ Integration test suite (all screens) — full button-level tests + 6 bug-catching red-green pairs across all 6 screen test files; 212/212 tests passing
+- ✅ Bug 1: Triads 2nd Inv blank fretboard — `boxHighlights` sentinel `[{fretStart:0,fretEnd:0}]` when all frets are zero — `0609629`
+- ✅ Bug 2: Triads All Strings defaults to mid-neck — `boxHighlights` returns `[]` immediately when `stringGroup === 'all'` — `0609629`
+- ✅ Bug 3: Scales Advanced section unresponsive — confirmed native-only (LayoutAnimation is a no-op in Jest); regression test added as guard — `1c789fb`
+- ✅ Bug 4: Scales Note/Interval display wipes labels — added `.toLowerCase()` before passing `displayMode` to FretboardViewer — `1c789fb`
+- ✅ Bug 5: Chords dimmed root note unresponsive — `handleNotePress` now falls back to closest `rootFret` by absolute fret distance — `3635c51`
+- ✅ Bug 6: Settings Display rows non-interactive — added `style` prop to `SegmentedControl`, passed `flex:1` in SettingsScreen rows; fixed `jest.setup.ts` mock to share `mockValue` across calls — `831f487`
+- ✅ Visual Overhaul — ChipPicker + SegmentedControl component system; all 5 screens migrated; SettingsScreen; header reduced to 2 icons; Advanced collapsible sections on Scales + Triads — `4ce83c4` through `194886f`
+- ✅ Glossary screen — book icon in header opens modal with plain-English definitions for all terms (chords, scales, modes, triads, arpeggios, progressions, display modes, header controls) — `49c6381`
+- ✅ Hint text on all tabs — contextual explainer text below controls on Scales, Triads, Arpeggios, and Progressions screens — `49c6381`
+- ✅ Chord names under Roman numerals — Progressions diatonic row shows "C", "Dm", "Em°", etc. below each numeral — `49c6381`
+- ✅ Capo label UX — "C"/"C3" → "Capo"/"Capo 3" with wider minWidth and larger tap targets — `49c6381`
+- ✅ Color palette exploration — 5 named palettes (Original, Modern Blue, Warm Neutral, Modern iOS, Dark Premium, Fretboard) with live PaletteSwitcher strip; palette persisted via AsyncStorage — `4ac7a34`
+- ✅ UX audit — beginner persona walkthrough compiled to `docs/ux-audit-2026-02-21.md` — `49c6381`
 
 ---
 
@@ -162,7 +183,7 @@ to describe the Pentatonic Equator concept, then design and build the feature.
 - Whether settings (flats, left-hand, capo) belong in a dedicated Settings screen vs the header
 - Interactive HTML prototypes to preview layout options before committing to code
 
-**Status:** Not started — needs brainstorming session
+**Status:** ✅ Done — design doc at `7408343`, implementation plan at `b410647`, implementation complete across `4ce83c4`–`194886f`
 
 ---
 
@@ -520,7 +541,7 @@ brainstorming session has concrete palette options to anchor decisions.
 
 **Files:** `src/theme/colors.ts`, `src/theme/ThemeContext.tsx`
 
-**Status:** Not started
+**Status:** ✅ Done — 5 palettes (Original, Modern Blue, Warm Neutral, Modern iOS, Dark Premium, Fretboard) with live PaletteSwitcher strip — `4ac7a34`
 
 ---
 
@@ -554,7 +575,7 @@ the main TODO on a case-by-case basis — not an automatic promotion.
 3. Claude compiles findings into `docs/ux-audit-YYYY-MM-DD.md`
 4. Review the findings together and promote worthy items to the main TODO
 
-**Status:** Not started
+**Status:** ✅ Done — `docs/ux-audit-2026-02-21.md` committed — `49c6381`
 
 ---
 
@@ -587,7 +608,7 @@ header as a session-level control that guitarists toggle frequently mid-practice
 **Note:** This item is closely related to the P0 Visual Overhaul — consider tackling them
 together in the same brainstorming session.
 
-**Status:** Not started — needs brainstorming session
+**Status:** ✅ Done — `b03d330` (SettingsScreen with Display/Hand/Theme card rows), `194886f` (gear icon in header, modal presentation)
 
 ---
 
@@ -612,7 +633,7 @@ inactive states clearly distinct.
 
 **Files:** `App.tsx` (capo control in `headerRight`), possibly `src/theme/ThemeContext.tsx`
 
-**Status:** Not started — pick an approach before implementing
+**Status:** ✅ Done — label changed to "Capo"/"Capo N", wider tap targets, increased padding — `49c6381`
 
 ---
 
