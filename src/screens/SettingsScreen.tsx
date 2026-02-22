@@ -91,7 +91,7 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
 
         <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>ABOUT</Text>
         <View style={[styles.card, { backgroundColor: theme.bgSecondary }]}>
-          <TouchableOpacity style={styles.row} onPress={onOpenGlossary} accessibilityRole="button">
+          <TouchableOpacity style={styles.row} onPress={onOpenGlossary} accessibilityRole="button" accessibilityLabel="Glossary">
             <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>Glossary</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={theme.textMuted} />
           </TouchableOpacity>

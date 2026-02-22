@@ -69,8 +69,8 @@ describe('SettingsScreen', () => {
     const onClose = jest.fn();
     let tree: any;
     act(() => { tree = create(<SettingsScreen onClose={onClose} onOpenGlossary={noop} />); });
-    const buttons = tree.root.findAllByType('TouchableOpacity');
-    act(() => { buttons[0].props.onPress(); }); // first button = close
+    const closeBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Close settings')[0];
+    act(() => { closeBtn.props.onPress(); });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -78,8 +78,8 @@ describe('SettingsScreen', () => {
     const onOpenGlossary = jest.fn();
     let tree: any;
     act(() => { tree = create(<SettingsScreen onClose={noop} onOpenGlossary={onOpenGlossary} />); });
-    const buttons = tree.root.findAllByType('TouchableOpacity');
-    act(() => { buttons[buttons.length - 1].props.onPress(); }); // last button = Glossary row
+    const glossaryBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Glossary')[0];
+    act(() => { glossaryBtn.props.onPress(); });
     expect(onOpenGlossary).toHaveBeenCalledTimes(1);
   });
 
