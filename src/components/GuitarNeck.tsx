@@ -213,8 +213,8 @@ function GuitarNeckInner({
 
   const renderInlays = () => {
     const inlays: React.ReactElement[] = [];
-    const singleInlays = [3, 5, 7, 9, 15];
-    const doubleInlays = [12];
+    const singleInlays = [3, 5, 7, 9, 15, 17, 19, 21];
+    const doubleInlays = [12, 24];
     const midY = FB.padTop + 2.5 * FB.stringSpacing;
 
     for (const f of singleInlays) {
