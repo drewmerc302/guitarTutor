@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../theme/ThemeContext';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { useResponsive } from '../hooks/useResponsive';
 import { ChipPicker, SegmentedControl, FretboardViewer, RootPicker } from '../components';
 import { TRIAD_TYPES, computeTriadPositions } from '../engine/triads';
 import { assignFingers } from '../engine/fingers';
@@ -16,7 +15,6 @@ if (Platform.OS === 'android') {
 
 export function TriadsScreen() {
   const { theme } = useTheme();
-  const { isTablet } = useResponsive();
   const [root, setRoot] = usePersistentState<number>('triads.root', 0);
   const [type, setType] = usePersistentState<string>('triads.type', 'Major');
   const [stringGroup, setStringGroup] = usePersistentState<string>('triads.stringGroup', 'all');
@@ -87,69 +85,65 @@ export function TriadsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
-      <ScrollView contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}>
-        <View style={[styles.mainRow, isTablet && styles.mainRowTablet]}>
-          <View style={[styles.controlsPanel, isTablet && styles.controlsPanelTablet]}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.title, { color: theme.textPrimary }]}>Triads</Text>
-            </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Triads</Text>
+        </View>
 
-            <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
+        <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
 
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-            <ChipPicker options={triadTypes} activeOption={type} onSelect={setType} />
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
+        <ChipPicker options={triadTypes} activeOption={type} onSelect={setType} />
 
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-            <SegmentedControl options={['Finger', 'Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
+        <SegmentedControl options={['Finger', 'Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
 
-            <TouchableOpacity
-              style={[styles.advancedToggle, { backgroundColor: theme.bgTertiary }]}
-              onPress={() => {
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                setAdvancedOpen(v => !v);
-              }}
-              accessibilityLabel="Toggle advanced options"
-            >
-              <Text style={[styles.advancedLabel, { color: theme.textSecondary }]}>Advanced</Text>
-              <MaterialCommunityIcons
-                name={advancedOpen ? 'chevron-down' : 'chevron-right'}
-                size={18}
-                color={theme.textMuted}
-              />
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.advancedToggle, { backgroundColor: theme.bgTertiary }]}
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setAdvancedOpen(v => !v);
+          }}
+          accessibilityLabel="Toggle advanced options"
+        >
+          <Text style={[styles.advancedLabel, { color: theme.textSecondary }]}>Advanced</Text>
+          <MaterialCommunityIcons
+            name={advancedOpen ? 'chevron-down' : 'chevron-right'}
+            size={18}
+            color={theme.textMuted}
+          />
+        </TouchableOpacity>
 
-            {advancedOpen && (
-              <>
-                <Text style={[styles.label, { color: theme.textSecondary }]}>Strings</Text>
-                <ChipPicker
-                  options={STRING_GROUP_OPTIONS.map(g => g.label)}
-                  activeOption={stringGroupLabel}
-                  onSelect={(label) => setStringGroup(
-                    STRING_GROUP_OPTIONS.find(g => g.label === label)?.value ?? 'all'
-                  )}
-                />
-
-                <Text style={[styles.label, { color: theme.textSecondary }]}>Inversion</Text>
-                <SegmentedControl
-                  options={['Root Pos', '1st Inv', '2nd Inv']}
-                  activeOption={['Root Pos', '1st Inv', '2nd Inv'][inversion]}
-                  onSelect={(v) => setInversion(['Root Pos', '1st Inv', '2nd Inv'].indexOf(v))}
-                />
-              </>
-            )}
-
-            <Text style={[styles.hint, { color: theme.textMuted }]}>
-              A triad is a 3-note chord (root, 3rd, 5th) — the building block of all larger chords. Try different string groups and inversions to find the shape nearest to where you're already playing.
-            </Text>
-          </View>
-
-          <View style={[styles.neckContainer, isTablet && styles.neckContainerTablet]}>
-            <FretboardViewer
-              notes={displayNotes}
-              displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
-              boxHighlights={boxHighlights}
+        {advancedOpen && (
+          <>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Strings</Text>
+            <ChipPicker
+              options={STRING_GROUP_OPTIONS.map(g => g.label)}
+              activeOption={stringGroupLabel}
+              onSelect={(label) => setStringGroup(
+                STRING_GROUP_OPTIONS.find(g => g.label === label)?.value ?? 'all'
+              )}
             />
-          </View>
+
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Inversion</Text>
+            <SegmentedControl
+              options={['Root Pos', '1st Inv', '2nd Inv']}
+              activeOption={['Root Pos', '1st Inv', '2nd Inv'][inversion]}
+              onSelect={(v) => setInversion(['Root Pos', '1st Inv', '2nd Inv'].indexOf(v))}
+            />
+          </>
+        )}
+
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          A triad is a 3-note chord (root, 3rd, 5th) — the building block of all larger chords. Try different string groups and inversions to find the shape nearest to where you're already playing.
+        </Text>
+
+        <View style={styles.neckContainer}>
+          <FretboardViewer
+            notes={displayNotes}
+            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
+            boxHighlights={boxHighlights}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -159,16 +153,10 @@ export function TriadsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  contentTablet: { paddingHorizontal: 24, paddingBottom: 32 },
-  mainRow: { flexDirection: 'column' },
-  mainRowTablet: { flexDirection: 'row', alignItems: 'flex-start' },
-  controlsPanel: { width: '100%' },
-  controlsPanelTablet: { width: '40%', paddingRight: 24 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
   neckContainer: { alignItems: 'center', marginTop: 16 },
-  neckContainerTablet: { flex: 1, marginTop: 0 },
   hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
   advancedToggle: {
     flexDirection: 'row',

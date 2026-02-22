@@ -28,7 +28,7 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleLeftHanded: () => {},
   capo: 0,
   setCapo: () => {},
-  palette: 'Modern iOS',
+  palette: 'Original',
   setPalette: () => {},
 });
 
@@ -38,7 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [useFlats, setUseFlats] = useState(false);
   const [isLeftHanded, setIsLeftHanded] = useState(false);
   const [capo, setCapo] = useState(0);
-  const [palette, setPaletteState] = useState<PaletteName>('Modern iOS');
+  const [palette, setPaletteState] = useState<PaletteName>('Original');
 
   const isDark = override !== null ? override : systemScheme !== 'light';
 
@@ -121,7 +121,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const activeTheme = useMemo(() => {
-    const pair = PALETTES[palette] ?? PALETTES['Warm'];
+    const pair = PALETTES[palette] ?? PALETTES['Original'];
     return isDark ? pair.dark : pair.light;
   }, [isDark, palette]);
 
