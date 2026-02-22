@@ -52,6 +52,22 @@ describe('SegmentedControl', () => {
     expect(onSelect).toHaveBeenCalledWith('Note');
   });
 
+  test('applies custom style to container', () => {
+    let tree: any;
+    act(() => {
+      tree = create(
+        <SegmentedControl
+          options={['A', 'B']}
+          activeOption="A"
+          onSelect={() => {}}
+          style={{ flex: 1 }}
+        />
+      );
+    });
+    const root = tree.toJSON();
+    expect(JSON.stringify(root.props.style)).toContain('"flex":1');
+  });
+
   test('active segment has different style than inactive', () => {
     let tree: any;
     act(() => {
