@@ -38,7 +38,7 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
               options={["♯", "♭"]}
               activeOption={useFlats ? "♭" : "♯"}
               onSelect={(opt) => { if ((opt === "♭") !== useFlats) toggleFlats(); }}
-              minWidth={140}
+              minWidth={160}
             />
           </View>
           <View style={[styles.separator, { backgroundColor: theme.border }]} />
@@ -48,7 +48,7 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
               options={["Right-handed", "Left-handed"]}
               activeOption={isLeftHanded ? "Left-handed" : "Right-handed"}
               onSelect={(opt) => { if ((opt === "Left-handed") !== isLeftHanded) toggleLeftHanded(); }}
-              minWidth={140}
+              minWidth={160}
             />
           </View>
           <View style={[styles.separator, { backgroundColor: theme.border }]} />
@@ -58,7 +58,7 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
               options={["Light", "Dark"]}
               activeOption={isDark ? "Dark" : "Light"}
               onSelect={(opt) => { if ((opt === "Dark") !== isDark) toggleTheme(); }}
-              minWidth={140}
+              minWidth={160}
             />
           </View>
           <View style={[styles.separator, { backgroundColor: theme.border }]} />
@@ -68,7 +68,7 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
               options={["Modern iOS", "Warm"]}
               activeOption={palette === 'Warm' ? 'Warm' : 'Modern iOS'}
               onSelect={(opt) => { setPalette(opt === 'Modern iOS' ? 'Modern iOS' : 'Warm'); }}
-              minWidth={140}
+              minWidth={160}
             />
           </View>
         </View>
