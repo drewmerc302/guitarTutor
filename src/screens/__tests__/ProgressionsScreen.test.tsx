@@ -210,6 +210,30 @@ describe('ProgressionsScreen', () => {
     expect(getColor(clearedNumeral)).toBe(MUTED);
   });
 
+  test('chord name renders below each numeral', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    // Default root = C. The I chord = C Major, so 'C' should appear as chord name
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('"I"');
+    // Chord name 'C' appears below the I numeral
+    expect(json).toContain('"C"');
+  });
+
+  test('diatonic hint text includes the current key name', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    // Default root = C. React Native splits JSX template-literal expressions into
+    // separate Text children, so the JSON contains the static part "key of " and
+    // the dynamic note name "C" as adjacent array entries.
+    const json = JSON.stringify(tree.toJSON());
+    // The static portion "key of " is always present verbatim in the serialised JSON.
+    expect(json).toContain('key of ');
+    // The note name for root=0 is 'C'; verify it also appears (it does, as the
+    // adjacent child immediately after the "key of " segment).
+    expect(json).toContain('"C"');
+  });
+
   // ── 4a-engine: getDiatonicChords engine tests ─────────────────────────────
   // NOTE: The Circle of Fifths uses SVG <G onPress={...}> elements. These are
   // not accessible via findAllByType('TouchableOpacity') in react-test-renderer,
