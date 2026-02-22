@@ -99,7 +99,7 @@ describe('computeScalePositions', () => {
 
   test('A minor pentatonic produces 5 boxes all within the neck', () => {
     // Low E (STANDARD_TUNING[5] = 4). A = note value 9. Root at fret 5.
-    // With 24 frets, all 5 boxes fit without wrapping.
+    // With wrapping at fret 12, boxes wrap back to fill lower frets.
     const positions = computeScalePositions(9, [0, 3, 5, 7, 10]);
     expect(positions).toHaveLength(5);
     for (const pos of positions) {
@@ -111,8 +111,8 @@ describe('computeScalePositions', () => {
     expect(positions[1].fretStart).toBe(7);
     expect(positions[2].fretStart).toBe(9);
     expect(positions[3].fretStart).toBe(12);
-    // With 24 frets, box 5 fits at fret 14 instead of wrapping
-    expect(positions[4].fretStart).toBe(14);
+    // With wrapping, box 5 wraps back to lower fret
+    expect(positions[4].fretStart).toBe(3);
   });
 
   test('all boxes have fretStart within TOTAL_FRETS for all 12 roots and all scale types', () => {

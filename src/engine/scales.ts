@@ -74,7 +74,7 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     return null;
   }
 
-  // Generate forward box starts from baseRootE (ignore TOTAL_FRETS limit here)
+  // Generate forward box starts from baseRootE (always generate all boxes, then wrap)
   const forwardStarts: number[] = [baseRootE];
   let current = baseRootE;
   for (let i = 1; i < NUM_BOXES; i++) {
@@ -82,25 +82,23 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     forwardStarts.push(current);
   }
 
-  // Separate into valid (fretEnd <= TOTAL_FRETS) and overflowing boxes
+  // Always wrap: find boxes that start after fret 12 (more than half neck) and wrap them
   const validStarts: number[] = [];
-  let overflowCount = 0;
-  for (const s of forwardStarts) {
-    if (s + 3 <= TOTAL_FRETS) {
-      validStarts.push(s);
-    } else {
-      overflowCount++;
-    }
-  }
-
-  // Back-fill overflowing boxes by searching backward from baseRootE
   const wrappedStarts: number[] = [];
   let searchFrom = baseRootE;
-  for (let i = 0; i < overflowCount; i++) {
-    const prev = prevBoxStart(searchFrom);
-    if (prev !== null && prev + 3 <= TOTAL_FRETS) {
-      wrappedStarts.push(prev);
-      searchFrom = prev;
+  
+  for (const s of forwardStarts) {
+    if (s > 12) {
+      // This box is in the upper half - wrap it back toward nut
+      const prev = prevBoxStart(searchFrom);
+      if (prev !== null) {
+        wrappedStarts.push(prev);
+        searchFrom = prev;
+      } else {
+        validStarts.push(s);
+      }
+    } else {
+      validStarts.push(s);
     }
   }
 
@@ -143,37 +141,6 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
       label: `Box ${i + 1}`,
       fretStart: startFret,
       fretEnd: endFret,
-      notes: boxNotes,
-    });
-  }
-
-  // Second pass: add octave repeats (+12 frets) if they fit on the fretboard
-  for (let i = 0; i < allStarts.length; i++) {
-    const startFret = allStarts[i] + 12;
-    if (startFret + 3 > TOTAL_FRETS) continue;
-    
-    const boxNotes: FretboardNote[] = [];
-    for (let s = 0; s < 6; s++) {
-      for (let f = startFret; f <= Math.min(startFret + 3, TOTAL_FRETS); f++) {
-        const noteValue = (STANDARD_TUNING[s] + f) % 12;
-        const fromRoot = (noteValue - root + 12) % 12;
-        if (intervalSet.has(fromRoot)) {
-          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
-          boxNotes.push({
-            string: s, fret: f, note: noteValue, interval: fromRoot,
-            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
-            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
-          });
-        }
-      }
-    }
-
-    assignFingers(boxNotes);
-
-    positions.push({
-      label: `Box ${i + 1}`,
-      fretStart: startFret,
-      fretEnd: startFret + 3,
       notes: boxNotes,
     });
   }
