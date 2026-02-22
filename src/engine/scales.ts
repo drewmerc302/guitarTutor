@@ -62,9 +62,9 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
 
   // Helper: find previous box start going backward (toward nut) from a given fret
   function prevBoxStart(from: number): number | null {
-    const prevMax = from - 2;
-    if (prevMax < 0) return null;
-    for (let f = prevMax; f >= Math.max(0, prevMax - 3); f--) {
+    // Search from fret 0 up to 3 frets before current position
+    const searchStart = Math.max(0, from - 3);
+    for (let f = searchStart; f < from; f++) {
       for (let s = 0; s < 6; s++) {
         const noteVal = (STANDARD_TUNING[s] + f) % 12;
         const fromRoot = (noteVal - root + 12) % 12;
