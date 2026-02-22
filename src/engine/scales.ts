@@ -74,47 +74,35 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     return null;
   }
 
-  // Generate forward box starts from baseRootE
-  const forwardStarts: number[] = [baseRootE];
+  // Start with Box 1 at baseRootE
+  const boxStarts: number[] = [baseRootE];
+
+  // Generate forward boxes going UP the neck from Box 1
   let current = baseRootE;
   for (let i = 1; i < NUM_BOXES; i++) {
     current = nextBoxStart(current);
-    forwardStarts.push(current);
-  }
-
-  // Wrap boxes that start after fret 12 back toward nut to fill lower frets
-  const validStarts: number[] = [];
-  const wrappedStarts: number[] = [];
-  let searchFrom = baseRootE;
-  
-  for (const s of forwardStarts) {
-    if (s > 12) {
-      // This box is in upper half - wrap it back toward nut
-      const prev = prevBoxStart(searchFrom);
-      if (prev !== null) {
-        wrappedStarts.push(prev);
-        searchFrom = prev;
-      } else {
-        validStarts.push(s);
-      }
-    } else {
-      validStarts.push(s);
-      searchFrom = s;
+    if (current + 3 <= TOTAL_FRETS) {
+      boxStarts.push(current);
     }
   }
 
-  // Combine, deduplicate, sort ascending by fret position
-  const allStartsSet = new Set([...validStarts, ...wrappedStarts]);
-  const allStartsAsc = Array.from(allStartsSet).sort((a, b) => a - b);
+  // Generate backward boxes going DOWN toward nut from Box 1
+  const backwardStarts: number[] = [];
+  current = baseRootE;
+  for (let i = 0; i < NUM_BOXES - 1; i++) {
+    const prev = prevBoxStart(current);
+    if (prev !== null) {
+      backwardStarts.push(prev);
+      current = prev;
+    } else {
+      break;
+    }
+  }
 
-  // Reorder so Box 1 starts at the root position on low E, then ascend,
-  // with any wrapped (lower-fret) boxes cycling to the end.
-  const rootIdx = allStartsAsc.indexOf(baseRootE);
-  const allStarts = rootIdx >= 0
-    ? [...allStartsAsc.slice(rootIdx), ...allStartsAsc.slice(0, rootIdx)]
-    : allStartsAsc;
+  // Keep forward boxes in order (Box 1, Box 2, etc.), append backward boxes at the end
+  const allStarts = [...boxStarts, ...backwardStarts];
 
-  // Build ScalePosition objects - first pass: original boxes
+  // Build ScalePosition objects
   const positions: ScalePosition[] = [];
   for (let i = 0; i < allStarts.length; i++) {
     const startFret = allStarts[i];
@@ -142,37 +130,6 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
       label: `Box ${i + 1}`,
       fretStart: startFret,
       fretEnd: endFret,
-      notes: boxNotes,
-    });
-  }
-
-  // Second pass: add octave repeats (+12 frets) for patterns that have room
-  for (let i = 0; i < allStarts.length; i++) {
-    const startFret = allStarts[i] + 12;
-    if (startFret + 3 > TOTAL_FRETS) continue;
-    
-    const boxNotes: FretboardNote[] = [];
-    for (let s = 0; s < 6; s++) {
-      for (let f = startFret; f <= Math.min(startFret + 3, TOTAL_FRETS); f++) {
-        const noteValue = (STANDARD_TUNING[s] + f) % 12;
-        const fromRoot = (noteValue - root + 12) % 12;
-        if (intervalSet.has(fromRoot)) {
-          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
-          boxNotes.push({
-            string: s, fret: f, note: noteValue, interval: fromRoot,
-            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
-            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
-          });
-        }
-      }
-    }
-
-    assignFingers(boxNotes);
-
-    positions.push({
-      label: `Box ${i + 1}`,
-      fretStart: startFret,
-      fretEnd: startFret + 3,
       notes: boxNotes,
     });
   }
