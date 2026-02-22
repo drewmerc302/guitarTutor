@@ -166,7 +166,6 @@ export function ChordsScreen() {
             <ChordPreview
               voicing={activeVoicing}
               root={root}
-              chordName={`${activeRootName} ${type}`}
             />
           </View>
         )}

@@ -18,7 +18,7 @@ describe('ChordPreview', () => {
   test('renders without crashing', () => {
     let tree: any;
     act(() => {
-      tree = create(<ChordPreview voicing={openCVoicing} root={0} chordName="C" />);
+      tree = create(<ChordPreview voicing={openCVoicing} root={0} />);
     });
     expect(tree.toJSON()).toBeTruthy();
   });
@@ -26,7 +26,7 @@ describe('ChordPreview', () => {
   test('renders null when voicing is null', () => {
     let tree: any;
     act(() => {
-      tree = create(<ChordPreview voicing={null} root={0} chordName="C" />);
+      tree = create(<ChordPreview voicing={null} root={0} />);
     });
     expect(tree.toJSON()).toBeNull();
   });
@@ -34,7 +34,7 @@ describe('ChordPreview', () => {
   test('renders muted string markers for muted strings', () => {
     let tree: any;
     act(() => {
-      tree = create(<ChordPreview voicing={openCVoicing} root={0} chordName="C" />);
+      tree = create(<ChordPreview voicing={openCVoicing} root={0} />);
     });
     const json = JSON.stringify(tree.toJSON());
     // String 5 is muted (f=-1), should show × marker
@@ -44,7 +44,7 @@ describe('ChordPreview', () => {
   test('renders fret offset label for barre chords', () => {
     let tree: any;
     act(() => {
-      tree = create(<ChordPreview voicing={barreVoicing} root={9} chordName="A" />);
+      tree = create(<ChordPreview voicing={barreVoicing} root={9} />);
     });
     const json = JSON.stringify(tree.toJSON());
     // Should show fret position indicator
@@ -54,7 +54,7 @@ describe('ChordPreview', () => {
   test('renders nut line for open position chords', () => {
     let tree: any;
     act(() => {
-      tree = create(<ChordPreview voicing={openCVoicing} root={0} chordName="C" />);
+      tree = create(<ChordPreview voicing={openCVoicing} root={0} />);
     });
     const json = JSON.stringify(tree.toJSON());
     // Nut rendered with strokeWidth 3
@@ -64,7 +64,7 @@ describe('ChordPreview', () => {
   test('renders note dots for all non-muted strings', () => {
     let tree: any;
     act(() => {
-      tree = create(<ChordPreview voicing={openCVoicing} root={0} chordName="C" />);
+      tree = create(<ChordPreview voicing={openCVoicing} root={0} />);
     });
     const root = tree.root;
     // Should have Circle elements for note dots (5 played strings)

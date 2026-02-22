@@ -213,6 +213,10 @@ describe('ChordsScreen', () => {
     const json = JSON.stringify(tree.toJSON());
     // Default: C Major — diagram chord name label should appear
     expect(json).toContain('C Major');
+    // ChordPreview SVG component should be in the tree
+    const { ChordPreview: _CP } = require('../../components');
+    const CP = (_CP as any).type;
+    expect(tree.root.findByType(CP)).toBeTruthy();
   });
 
   test('chord diagram name updates when type changes to Minor', () => {

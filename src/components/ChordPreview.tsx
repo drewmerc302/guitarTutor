@@ -9,10 +9,9 @@ import { assignFingers } from '../engine/fingers';
 interface ChordPreviewProps {
   voicing: ChordVoicing | null;
   root: number;
-  chordName: string;
 }
 
-function ChordPreviewInner({ voicing, root, chordName }: ChordPreviewProps) {
+function ChordPreviewInner({ voicing, root }: ChordPreviewProps) {
   const { theme } = useTheme();
 
   const rendered = useMemo(() => {
