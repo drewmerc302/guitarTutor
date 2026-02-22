@@ -61,7 +61,10 @@ export function TriadsScreen() {
     // Bug 2 fix: 'All Strings' shows all positions combined — don't force a scroll region
     if (stringGroup === 'all') return [];
     const frets = notes.map(n => n.fret).filter(f => f > 0);
-    // Bug 1 fix: notes exist but all at fret 0 — send a sentinel to scroll to nut
+    // Bug 1 fix: notes exist but all at fret 0 — send a sentinel to scroll to nut.
+    // This sentinel handles the edge case where the engine returns only fret-0 notes
+    // for a specific string group — currently not produced by computeTriadPositions
+    // but kept as defensive code.
     if (frets.length === 0) {
       return notes.length > 0 ? [{ fretStart: 0, fretEnd: 0 }] : [];
     }

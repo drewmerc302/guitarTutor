@@ -91,67 +91,91 @@ describe('TriadsScreen', () => {
     expect(fv.props.boxHighlights).toEqual([]);
   });
 
-  test('Bug 1 — open-string triad in All Strings mode sends empty boxHighlights (no mid-neck scroll)', () => {
+  test('Bug 1/2 — switching from All Strings to a specific group produces scroll region', () => {
     let tree: any;
     act(() => { tree = create(<TriadsScreen />); });
 
-    // Switch root to E — E minor has open-string positions (fret 0 notes)
-    // that historically triggered Bug 1 (all-zero frets collapsing boxHighlights)
-    const eBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'E');
-    act(() => { eBtns[0].props.onPress(); });
-
-    // Switch type to Minor
-    const minorBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Minor');
-    act(() => { minorBtns[0].props.onPress(); });
-
-    // stringGroup remains 'all' (default) — in All Strings mode, all positions are combined
-    // spanning many frets. Bug 2 fix ensures boxHighlights is always [] for 'all',
-    // which also covers Bug 1 (no spurious scroll to mid-neck or wrong fret).
+    // Default: All Strings → boxHighlights = []
     const FV = (_FV as any).type;
-    const fv = tree.root.findByType(FV);
-
-    // Before fix: boxHighlights is non-empty (spans all fret positions including open strings)
-    // After fix: always [] when stringGroup === 'all'
+    let fv = tree.root.findByType(FV);
     expect(fv.props.boxHighlights).toEqual([]);
-  });
 
-  test('selecting 1st Inv shows active inversion in JSON', () => {
-    let tree: any;
-    act(() => { tree = create(<TriadsScreen />); });
-    const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
-    act(() => { advBtns[0].props.onPress(); });
-    const inv1Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === '1st Inv');
-    act(() => { inv1Btns[0].props.onPress(); });
-    expect(JSON.stringify(tree.toJSON())).toContain('1st Inv');
-  });
-
-  test('selecting 2nd Inv shows active inversion in JSON', () => {
-    let tree: any;
-    act(() => { tree = create(<TriadsScreen />); });
-    const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
-    act(() => { advBtns[0].props.onPress(); });
-    const inv2Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2nd Inv');
-    act(() => { inv2Btns[0].props.onPress(); });
-    expect(JSON.stringify(tree.toJSON())).toContain('2nd Inv');
-  });
-
-  test('selecting string group 2-3-4 changes active option', () => {
-    let tree: any;
-    act(() => { tree = create(<TriadsScreen />); });
+    // Open Advanced and select strings 2-3-4
     const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
     act(() => { advBtns[0].props.onPress(); });
     const sg234Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2-3-4');
     act(() => { sg234Btns[0].props.onPress(); });
-    expect(JSON.stringify(tree.toJSON())).toContain('2-3-4');
+
+    // Now boxHighlights should be non-empty (specific string group has a scroll region)
+    fv = tree.root.findByType(FV);
+    expect(fv.props.boxHighlights.length).toBeGreaterThan(0);
   });
 
-  test('selecting string group 3-4-5 changes active option', () => {
+  test('selecting 1st Inv marks it as selected', () => {
     let tree: any;
     act(() => { tree = create(<TriadsScreen />); });
     const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
     act(() => { advBtns[0].props.onPress(); });
-    const sg345Btns = tree.root.findAll((n: any) => n.props.accessibilityLabel === '3-4-5');
-    act(() => { sg345Btns[0].props.onPress(); });
-    expect(JSON.stringify(tree.toJSON())).toContain('3-4-5');
+
+    // Before: 1st Inv is not selected (Root Pos is default)
+    const inv1BtnBefore = tree.root.findAll((n: any) => n.props.accessibilityLabel === '1st Inv')[0];
+    expect(inv1BtnBefore.props.accessibilityState?.selected).toBe(false);
+
+    act(() => { inv1BtnBefore.props.onPress(); });
+
+    // After: 1st Inv is now selected
+    const inv1BtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === '1st Inv')[0];
+    expect(inv1BtnAfter.props.accessibilityState?.selected).toBe(true);
+  });
+
+  test('selecting 2nd Inv marks it as selected', () => {
+    let tree: any;
+    act(() => { tree = create(<TriadsScreen />); });
+    const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
+    act(() => { advBtns[0].props.onPress(); });
+
+    // Before: 2nd Inv is not selected (Root Pos is default)
+    const inv2BtnBefore = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2nd Inv')[0];
+    expect(inv2BtnBefore.props.accessibilityState?.selected).toBe(false);
+
+    act(() => { inv2BtnBefore.props.onPress(); });
+
+    // After: 2nd Inv is now selected
+    const inv2BtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2nd Inv')[0];
+    expect(inv2BtnAfter.props.accessibilityState?.selected).toBe(true);
+  });
+
+  test('selecting string group 2-3-4 marks it as selected', () => {
+    let tree: any;
+    act(() => { tree = create(<TriadsScreen />); });
+    const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
+    act(() => { advBtns[0].props.onPress(); });
+
+    // Before: 2-3-4 is not selected (All strings is default)
+    const sg234BtnBefore = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2-3-4')[0];
+    expect(sg234BtnBefore.props.accessibilityState?.selected).toBe(false);
+
+    act(() => { sg234BtnBefore.props.onPress(); });
+
+    // After: 2-3-4 is now selected
+    const sg234BtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2-3-4')[0];
+    expect(sg234BtnAfter.props.accessibilityState?.selected).toBe(true);
+  });
+
+  test('selecting string group 3-4-5 marks it as selected', () => {
+    let tree: any;
+    act(() => { tree = create(<TriadsScreen />); });
+    const advBtns = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options');
+    act(() => { advBtns[0].props.onPress(); });
+
+    // Before: 3-4-5 is not selected (All strings is default)
+    const sg345BtnBefore = tree.root.findAll((n: any) => n.props.accessibilityLabel === '3-4-5')[0];
+    expect(sg345BtnBefore.props.accessibilityState?.selected).toBe(false);
+
+    act(() => { sg345BtnBefore.props.onPress(); });
+
+    // After: 3-4-5 is now selected
+    const sg345BtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === '3-4-5')[0];
+    expect(sg345BtnAfter.props.accessibilityState?.selected).toBe(true);
   });
 });
