@@ -121,7 +121,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const activeTheme = useMemo(() => {
-    const pair = PALETTES[palette] ?? PALETTES['Original'];
+    const pair = PALETTES[palette] ?? PALETTES['Warm'];
     return isDark ? pair.dark : pair.light;
   }, [isDark, palette]);
 

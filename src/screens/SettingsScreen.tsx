@@ -65,9 +65,9 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>Palette</Text>
             <SegmentedControl
-              options={["Modern iOS", "Original"]}
-              activeOption={palette === 'Original' ? 'Original' : 'Modern iOS'}
-              onSelect={(opt) => { setPalette(opt === 'Modern iOS' ? 'Modern iOS' : 'Original'); }}
+              options={["Modern iOS", "Warm"]}
+              activeOption={palette === 'Warm' ? 'Warm' : 'Modern iOS'}
+              onSelect={(opt) => { setPalette(opt === 'Modern iOS' ? 'Modern iOS' : 'Warm'); }}
               style={{ flex: 1 }}
             />
           </View>
