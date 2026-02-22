@@ -74,7 +74,7 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     return null;
   }
 
-  // Generate forward box starts from baseRootE (always generate all boxes, then wrap)
+  // Generate forward box starts from baseRootE
   const forwardStarts: number[] = [baseRootE];
   let current = baseRootE;
   for (let i = 1; i < NUM_BOXES; i++) {
@@ -82,36 +82,9 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     forwardStarts.push(current);
   }
 
-  // Always wrap: find boxes that start after fret 12 (more than half neck) and wrap them
-  const validStarts: number[] = [];
-  const wrappedStarts: number[] = [];
-  let searchFrom = baseRootE;
-  
-  for (const s of forwardStarts) {
-    if (s > 12) {
-      // This box is in the upper half - wrap it back toward nut
-      const prev = prevBoxStart(searchFrom);
-      if (prev !== null) {
-        wrappedStarts.push(prev);
-        searchFrom = prev;
-      } else {
-        validStarts.push(s);
-      }
-    } else {
-      validStarts.push(s);
-    }
-  }
-
-  // Combine, deduplicate, sort ascending by fret position
-  const allStartsSet = new Set([...validStarts, ...wrappedStarts]);
-  const allStartsAsc = Array.from(allStartsSet).sort((a, b) => a - b);
-
-  // Reorder so Box 1 starts at the root position on low E, then ascend,
-  // with any wrapped (lower-fret) boxes cycling to the end.
-  const rootIdx = allStartsAsc.indexOf(baseRootE);
-  const allStarts = rootIdx >= 0
-    ? [...allStartsAsc.slice(rootIdx), ...allStartsAsc.slice(0, rootIdx)]
-    : allStartsAsc;
+  // For 24 frets, all boxes fit naturally - no wrapping needed
+  // Just use forwardStarts directly
+  const allStarts = forwardStarts;
 
   // Build ScalePosition objects - first pass: original boxes
   const positions: ScalePosition[] = [];
@@ -141,6 +114,37 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
       label: `Box ${i + 1}`,
       fretStart: startFret,
       fretEnd: endFret,
+      notes: boxNotes,
+    });
+  }
+
+  // Second pass: add octave repeats (+12 frets) for patterns that have room
+  for (let i = 0; i < allStarts.length; i++) {
+    const startFret = allStarts[i] + 12;
+    if (startFret + 3 > TOTAL_FRETS) continue;
+    
+    const boxNotes: FretboardNote[] = [];
+    for (let s = 0; s < 6; s++) {
+      for (let f = startFret; f <= Math.min(startFret + 3, TOTAL_FRETS); f++) {
+        const noteValue = (STANDARD_TUNING[s] + f) % 12;
+        const fromRoot = (noteValue - root + 12) % 12;
+        if (intervalSet.has(fromRoot)) {
+          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
+          boxNotes.push({
+            string: s, fret: f, note: noteValue, interval: fromRoot,
+            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
+            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
+          });
+        }
+      }
+    }
+
+    assignFingers(boxNotes);
+
+    positions.push({
+      label: `Box ${i + 1}`,
+      fretStart: startFret,
+      fretEnd: startFret + 3,
       notes: boxNotes,
     });
   }
