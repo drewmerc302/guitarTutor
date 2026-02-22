@@ -53,10 +53,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     height: 36,
+    width: '100%',
   },
   segment: {
-    minWidth: 44,
-    paddingHorizontal: 8,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
