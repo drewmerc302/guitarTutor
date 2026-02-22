@@ -37,9 +37,11 @@ export function ScalesScreen() {
     if (isAllActive) return null;
     const set = new Set<string>();
     for (const key of activePositions) {
-      const idx = parseInt(key);
-      if (positions[idx]) {
-        for (const note of positions[idx].notes) {
+      const boxNum = parseInt(key);
+      // Find ALL positions with this box number and add their notes
+      const matchingPositions = positions.filter(p => p.label === `Box ${boxNum + 1}`);
+      for (const pos of matchingPositions) {
+        for (const note of pos.notes) {
           set.add(`${note.string}-${note.fret}`);
         }
       }
@@ -49,11 +51,16 @@ export function ScalesScreen() {
 
   const boxHighlights = useMemo(() => {
     if (isAllActive) return [];
+    // When a box is selected, show ALL instances of that box pattern across the fretboard
     return activePositions.size > 0
-      ? Array.from(activePositions).map(key => positions[parseInt(key)]).filter(Boolean).map(p => ({
-          fretStart: p.fretStart,
-          fretEnd: p.fretEnd,
-        }))
+      ? Array.from(activePositions).flatMap(key => {
+          const boxNum = parseInt(key);
+          // Find ALL positions with this box number (there may be multiple at different fret locations)
+          return positions.filter(p => p.label === `Box ${boxNum + 1}`).map(p => ({
+            fretStart: p.fretStart,
+            fretEnd: p.fretEnd,
+          }));
+        })
       : [];
   }, [activePositions, positions, isAllActive]);
 
@@ -76,9 +83,11 @@ export function ScalesScreen() {
     });
   };
 
+  // Get unique box count based on scale type (5 for pentatonic, 7 for full scales)
+  const numBoxes = rotatedIntervals.length;
   const positionOptions = useMemo(() => {
-    return ['All', ...positions.map((_, i) => `Pos ${i + 1}`)];
-  }, [positions]);
+    return ['All', ...Array.from({ length: numBoxes }, (_, i) => `Pos ${i + 1}`)];
+  }, [numBoxes]);
 
   const activeChipOptions = useMemo((): Set<string> => {
     if (activePositions.has('all')) return new Set(['All']);
@@ -149,7 +158,12 @@ export function ScalesScreen() {
 
         <View style={styles.neckContainer}>
           <FretboardViewer
-            notes={isAllActive ? positions.flatMap(p => p.notes) : Array.from(activePositions).flatMap(key => positions[parseInt(key)]?.notes || [])}
+            notes={isAllActive 
+              ? positions.flatMap(p => p.notes) 
+              : Array.from(activePositions).flatMap(key => {
+                  const boxNum = parseInt(key);
+                  return positions.filter(p => p.label === `Box ${boxNum + 1}`).flatMap(p => p.notes);
+                })}
             displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
             activeNoteSet={activeNoteSet}
             boxHighlights={boxHighlights}
