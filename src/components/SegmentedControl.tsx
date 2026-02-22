@@ -53,7 +53,8 @@ const styles = StyleSheet.create({
     height: 36,
   },
   segment: {
-    flex: 1,
+    minWidth: 44,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
