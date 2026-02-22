@@ -18,7 +18,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps) {
-  const { theme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, setCapo, palette, setPalette } = useTheme();
+  const { theme, isDark, toggleTheme, isLeftHanded, toggleLeftHanded, capo, setCapo, palette, setPalette } = useTheme();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={["top"]}>
@@ -32,16 +32,6 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>DISPLAY</Text>
         <View style={[styles.card, { backgroundColor: theme.bgSecondary }]}>
-          <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>Note names</Text>
-            <SegmentedControl
-              options={["♯", "♭"]}
-              activeOption={useFlats ? "♭" : "♯"}
-              onSelect={(opt) => { if ((opt === "♭") !== useFlats) toggleFlats(); }}
-              minWidth={240}
-            />
-          </View>
-          <View style={[styles.separator, { backgroundColor: theme.border }]} />
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>Hand</Text>
             <SegmentedControl
