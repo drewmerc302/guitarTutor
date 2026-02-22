@@ -18,7 +18,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps) {
-  const { theme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, setCapo } = useTheme();
+  const { theme, isDark, toggleTheme, useFlats, toggleFlats, isLeftHanded, toggleLeftHanded, capo, setCapo, palette, setPalette } = useTheme();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={["top"]}>
@@ -58,6 +58,16 @@ export function SettingsScreen({ onClose, onOpenGlossary }: SettingsScreenProps)
               options={["Light", "Dark"]}
               activeOption={isDark ? "Dark" : "Light"}
               onSelect={(opt) => { if ((opt === "Dark") !== isDark) toggleTheme(); }}
+              style={{ flex: 1 }}
+            />
+          </View>
+          <View style={[styles.separator, { backgroundColor: theme.border }]} />
+          <View style={styles.row}>
+            <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>Palette</Text>
+            <SegmentedControl
+              options={["Modern iOS", "Original"]}
+              activeOption={palette === 'Original' ? 'Original' : 'Modern iOS'}
+              onSelect={(opt) => { setPalette(opt === 'Modern iOS' ? 'Modern iOS' : 'Original'); }}
               style={{ flex: 1 }}
             />
           </View>
