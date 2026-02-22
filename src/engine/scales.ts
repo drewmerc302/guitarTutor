@@ -100,12 +100,15 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
   }
 
   // Keep forward boxes in order (Box 1, Box 2, etc.), append backward boxes at the end
+  // Backward boxes fill in the gaps - if we have 2 backward boxes, they're positions before Box 1
   const allStarts = [...boxStarts, ...backwardStarts];
 
   // Build ScalePosition objects
   const positions: ScalePosition[] = [];
-  for (let i = 0; i < allStarts.length; i++) {
-    const startFret = allStarts[i];
+  
+  // First, create forward boxes with labels Box 1, Box 2, etc.
+  for (let i = 0; i < boxStarts.length; i++) {
+    const startFret = boxStarts[i];
     const endFret = startFret + 3;
     const boxNotes: FretboardNote[] = [];
 
@@ -128,6 +131,44 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
 
     positions.push({
       label: `Box ${i + 1}`,
+      fretStart: startFret,
+      fretEnd: endFret,
+      notes: boxNotes,
+    });
+  }
+
+  // Then add backward boxes - they fill the "missing" positions
+  // If we have 5 boxes total but only 3 forward, we add 2 backward with labels Box 4 and Box 5
+  const backwardLabels: string[] = [];
+  for (let i = boxStarts.length; i < NUM_BOXES; i++) {
+    backwardLabels.push(`Box ${NUM_BOXES - (i - boxStarts.length)}`);
+  }
+  
+  for (let i = 0; i < backwardStarts.length; i++) {
+    const startFret = backwardStarts[i];
+    const endFret = startFret + 3;
+    const boxNotes: FretboardNote[] = [];
+
+    for (let s = 0; s < 6; s++) {
+      for (let f = startFret; f <= Math.min(endFret, TOTAL_FRETS); f++) {
+        const noteValue = (STANDARD_TUNING[s] + f) % 12;
+        const fromRoot = (noteValue - root + 12) % 12;
+        if (intervalSet.has(fromRoot)) {
+          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
+          boxNotes.push({
+            string: s, fret: f, note: noteValue, interval: fromRoot,
+            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
+            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
+          });
+        }
+      }
+    }
+
+    assignFingers(boxNotes);
+
+    const label = backwardLabels[i] || `Box ${boxStarts.length + i + 1}`;
+    positions.push({
+      label: label,
       fretStart: startFret,
       fretEnd: endFret,
       notes: boxNotes,
