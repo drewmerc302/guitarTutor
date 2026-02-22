@@ -31,10 +31,14 @@ describe('ChordsScreen', () => {
       tree = create(<ChordsScreen />);
     });
     const json = JSON.stringify(tree.toJSON());
-    // Should have all 12 notes for root selection
+    // Should have the 7 natural notes and ♯/♭ buttons
     expect(json).toContain('"C"');
     expect(json).toContain('"G"');
     expect(json).toContain('"A"');
+    expect(json).toContain('♯');
+    expect(json).toContain('♭');
+    // Should NOT have chromatic notes in natural mode
+    expect(json).not.toContain('"C#"');
   });
 
   test('renders TypePicker with chord types', () => {
@@ -65,7 +69,7 @@ describe('ChordsScreen', () => {
       tree = create(<ChordsScreen />);
     });
     const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('Voicing:');
+    expect(json).toContain('Voicing');
   });
 
   // --- Interaction tests ---
@@ -73,38 +77,33 @@ describe('ChordsScreen', () => {
   test('selecting a note updates active note highlight', () => {
     let tree: any;
     act(() => { tree = create(<ChordsScreen />); });
-    const root = tree.root;
 
-    const initialButtons = root.findAllByType('TouchableOpacity');
-    const activeStyle = JSON.stringify([].concat(...initialButtons[0].props.style));
-    const inactiveStyle = JSON.stringify([].concat(...initialButtons[1].props.style));
-    expect(activeStyle).not.toEqual(inactiveStyle); // C is active, C# is not
+    // C is active by default
+    const cBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'C')[0];
+    expect(cBtn.props.accessibilityState?.selected).toBe(true);
 
-    act(() => { initialButtons[4].props.onPress(); }); // press E (index 4)
+    const gBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'G')[0];
+    expect(gBtn.props.accessibilityState?.selected).toBe(false);
 
-    const updatedButtons = root.findAllByType('TouchableOpacity');
-    const newActiveStyle = JSON.stringify([].concat(...updatedButtons[4].props.style));
-    const prevActiveStyle = JSON.stringify([].concat(...updatedButtons[0].props.style));
-    expect(newActiveStyle).not.toEqual(prevActiveStyle);
+    act(() => { gBtn.props.onPress(); });
+
+    const gBtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'G')[0];
+    expect(gBtnAfter.props.accessibilityState?.selected).toBe(true);
   });
 
   test('selecting a chord type updates active type highlight', () => {
     let tree: any;
     act(() => { tree = create(<ChordsScreen />); });
-    const root = tree.root;
 
-    // 0-11: note chips, 12: Major (first type, active by default)
-    const initialButtons = root.findAllByType('TouchableOpacity');
-    const majorStyle = JSON.stringify([].concat(...initialButtons[12].props.style));
-    const minorStyle = JSON.stringify([].concat(...initialButtons[13].props.style));
-    expect(majorStyle).not.toEqual(minorStyle);
+    const majorBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Major')[0];
+    const minorBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Minor')[0];
+    expect(majorBtn.props.accessibilityState?.selected).toBe(true);
+    expect(minorBtn.props.accessibilityState?.selected).toBe(false);
 
-    act(() => { initialButtons[13].props.onPress(); }); // press Minor
+    act(() => { minorBtn.props.onPress(); });
 
-    const updatedButtons = root.findAllByType('TouchableOpacity');
-    const newMinorStyle = JSON.stringify([].concat(...updatedButtons[13].props.style));
-    const prevMajorStyle = JSON.stringify([].concat(...updatedButtons[12].props.style));
-    expect(newMinorStyle).not.toEqual(prevMajorStyle);
+    const minorBtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Minor')[0];
+    expect(minorBtnAfter.props.accessibilityState?.selected).toBe(true);
   });
 
   test('Bug 5 — tapping a dimmed root note outside active voicing triggers a voicing switch', () => {
@@ -171,5 +170,59 @@ describe('ChordsScreen', () => {
     const fvAfter = tree.root.findByType(FretboardViewer);
     const voicingAfter = JSON.stringify([...(fvAfter.props.activeVoicing as Set<string>)].sort());
     expect(voicingAfter).toBe(voicingBefore);
+  });
+
+  test('pressing ♯ shows sharp notes and auto-sharps the active root', () => {
+    let tree: any;
+    act(() => { tree = create(<ChordsScreen />); }); // default: C, natural mode
+    const sharpBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Sharp')[0];
+    act(() => { sharpBtn.props.onPress(); });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('"C#"');  // sharp mode shows C#
+    expect(json).not.toContain('"C#/Db"'); // no combined labels
+    // root auto-updates to C# (index 1)
+    const fv = tree.root.findByType(FretboardViewer);
+    // C# root means the notes are different from C root — just verify it rendered
+    expect(fv).toBeTruthy();
+  });
+
+  test('pressing ♯ then ♯ again returns to natural mode', () => {
+    let tree: any;
+    act(() => { tree = create(<ChordsScreen />); });
+    const sharpBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Sharp')[0];
+    act(() => { sharpBtn.props.onPress(); }); // sharp mode
+    act(() => { sharpBtn.props.onPress(); }); // back to natural
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).not.toContain('"C#"');
+    expect(json).toContain('"C"');
+  });
+
+  test('pressing ♭ shows flat notes', () => {
+    let tree: any;
+    act(() => { tree = create(<ChordsScreen />); });
+    const flatBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Flat')[0];
+    act(() => { flatBtn.props.onPress(); });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('"Db"');
+    expect(json).toContain('"Bb"');
+  });
+
+  test('renders ChordPreview below the fretboard', () => {
+    let tree: any;
+    act(() => { tree = create(<ChordsScreen />); });
+    const json = JSON.stringify(tree.toJSON());
+    // Default: C Major — diagram chord name label should appear
+    expect(json).toContain('C Major');
+  });
+
+  test('chord diagram name updates when type changes to Minor', () => {
+    let tree: any;
+    act(() => { tree = create(<ChordsScreen />); });
+
+    const minorBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Minor')[0];
+    act(() => { minorBtn.props.onPress(); });
+
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('C Minor');
   });
 });

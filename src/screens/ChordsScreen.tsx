@@ -3,13 +3,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { FretboardViewer } from '../components';
+import { FretboardViewer, RootPicker, ChordPreview } from '../components';
 import { ChipPicker } from '../components/ChipPicker';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { CHORD_TYPES, getChordVoicings, buildVoicingRegions, ChordVoicing } from '../engine/chords';
 import { getNotesOnFretboard } from '../engine/fretboard';
 import { assignFingers } from '../engine/fingers';
-import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
+import { NATURAL_NAMES, ROOT_TO_NATURAL_POS } from '../components/RootPicker';
 import { usePersistentState } from '../hooks/usePersistentState';
 
 function getMinFret(voicing: ChordVoicing): number {
@@ -36,11 +36,14 @@ function findClosestToNutIndex(voicings: ChordVoicing[]): number {
 }
 
 export function ChordsScreen() {
-  const { theme, useFlats } = useTheme();
+  const { theme } = useTheme();
   const [root, setRoot] = usePersistentState<number>('chords.root', 0);
   const [type, setType] = usePersistentState<string>('chords.type', 'Major');
   const [display, setDisplay] = usePersistentState<string>('chords.display', 'interval');
   const [activeVoicingIndex, setActiveVoicingIndex] = useState(0);
+  const [activeRootName, setActiveRootName] = useState(
+    () => NATURAL_NAMES[ROOT_TO_NATURAL_POS[root]] ?? 'C'
+  );
 
   const intervals = CHORD_TYPES[type];
   const allNotes = useMemo(() => getNotesOnFretboard(root, intervals), [root, intervals]);
@@ -129,11 +132,10 @@ export function ChordsScreen() {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Chords</Text>
         </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <ChipPicker
-          options={useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES}
-          activeOption={(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}
-          onSelect={(name) => handleRootChange((useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES).indexOf(name))}
+        <RootPicker
+          root={root}
+          onRootChange={handleRootChange}
+          onDisplayNameChange={setActiveRootName}
         />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
@@ -156,8 +158,21 @@ export function ChordsScreen() {
           />
         </View>
 
-        <Text style={[styles.voicingLabel, { color: theme.textSecondary }]}>
-          Voicing: {NOTE_NAMES[root]} {type} ({activeVoicingIndex + 1}/{voicings.length})
+        {activeVoicing && (
+          <View style={styles.diagramContainer}>
+            <Text style={[styles.diagramChordName, { color: theme.textSecondary }]}>
+              {`${activeRootName} ${type}`}
+            </Text>
+            <ChordPreview
+              voicing={activeVoicing}
+              root={root}
+              chordName={`${activeRootName} ${type}`}
+            />
+          </View>
+        )}
+
+        <Text style={[styles.voicingLabel, { color: theme.textMuted }]}>
+          Voicing {activeVoicingIndex + 1}/{voicings.length}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -192,8 +207,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   voicingLabel: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 4,
+  },
+  diagramContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  diagramChordName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
   },
 });
