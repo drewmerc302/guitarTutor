@@ -2,10 +2,11 @@
 import React from 'react';
 import { create, act } from 'react-test-renderer';
 import { ChordsScreen } from '../ChordsScreen';
-import { FretboardViewer as _FretboardViewer } from '../../components';
-// React.memo wraps FretboardViewerInner; react-test-renderer stores the inner
+import { FretboardViewer as _FretboardViewer, ChordPreview as _ChordPreview } from '../../components';
+// React.memo wraps these components; react-test-renderer stores the inner
 // function as the fiber type, so findByType requires the unwrapped component.
 const FretboardViewer = (_FretboardViewer as any).type as typeof _FretboardViewer;
+const ChordPreview = (_ChordPreview as any).type as typeof _ChordPreview;
 
 describe('ChordsScreen', () => {
   test('renders without crashing', () => {
@@ -214,9 +215,7 @@ describe('ChordsScreen', () => {
     // Default: C Major — diagram chord name label should appear
     expect(json).toContain('C Major');
     // ChordPreview SVG component should be in the tree
-    const { ChordPreview: _CP } = require('../../components');
-    const CP = (_CP as any).type;
-    expect(tree.root.findByType(CP)).toBeTruthy();
+    expect(tree.root.findByType(ChordPreview)).toBeTruthy();
   });
 
   test('chord diagram name updates when type changes to Minor', () => {
