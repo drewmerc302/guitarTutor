@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
+import { useResponsive } from '../hooks/useResponsive';
 import { FretboardViewer, RootPicker, ChordDiagram } from '../components';
 import { ChipPicker } from '../components/ChipPicker';
 import { SegmentedControl } from '../components/SegmentedControl';
@@ -37,6 +38,7 @@ function findClosestToNutIndex(voicings: ChordVoicing[]): number {
 
 export function ChordsScreen() {
   const { theme } = useTheme();
+  const { isTablet } = useResponsive();
   const [root, setRoot] = usePersistentState<number>('chords.root', 0);
   const [type, setType] = usePersistentState<string>('chords.type', 'Major');
   const [display, setDisplay] = usePersistentState<string>('chords.display', 'interval');
@@ -127,35 +129,40 @@ export function ChordsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>Chords</Text>
-        </View>
+      <ScrollView contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}>
+        <View style={[styles.mainRow, isTablet && styles.mainRowTablet]}>
+          <View style={[styles.controlsPanel, isTablet && styles.controlsPanelTablet]}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: theme.textPrimary }]}>Chords</Text>
+            </View>
 
-        <RootPicker
-          root={root}
-          onRootChange={handleRootChange}
-          onDisplayNameChange={setActiveRootName}
-        />
+            <RootPicker
+              root={root}
+              onRootChange={handleRootChange}
+              onDisplayNameChange={setActiveRootName}
+            />
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <ChipPicker options={chordTypes} activeOption={type} onSelect={handleTypeChange} />
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
+            <ChipPicker options={chordTypes} activeOption={type} onSelect={handleTypeChange} />
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-        <SegmentedControl options={['Finger', 'Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
+            <SegmentedControl options={['Finger', 'Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
 
-        <Text style={[styles.voicingHint, { color: theme.textMuted }]}>
-          Tap a root to change voicings
-        </Text>
-        <View style={styles.neckContainer}>
-          <FretboardViewer
-            notes={displayNotes}
-            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
-            activeVoicing={activeVoicingSet}
-            hasVoicings={true}
-            onNotePress={handleNotePress}
-            barreFret={null}
-          />
+            <Text style={[styles.voicingHint, { color: theme.textMuted }]}>
+              Tap a root to change voicings
+            </Text>
+          </View>
+
+          <View style={[styles.neckContainer, isTablet && styles.neckContainerTablet]}>
+            <FretboardViewer
+              notes={displayNotes}
+              displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
+              activeVoicing={activeVoicingSet}
+              hasVoicings={true}
+              onNotePress={handleNotePress}
+              barreFret={null}
+            />
+          </View>
         </View>
 
         {activeVoicing && (
@@ -189,6 +196,24 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  contentTablet: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  mainRow: {
+    flexDirection: 'column',
+  },
+  mainRowTablet: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  controlsPanel: {
+    width: '100%',
+  },
+  controlsPanelTablet: {
+    width: '40%',
+    paddingRight: 24,
+  },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: {
@@ -207,6 +232,10 @@ const styles = StyleSheet.create({
   neckContainer: {
     alignItems: 'center',
     marginTop: 8,
+  },
+  neckContainerTablet: {
+    flex: 1,
+    marginTop: 0,
   },
   voicingLabel: {
     fontSize: 12,
