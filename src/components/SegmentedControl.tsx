@@ -1,18 +1,19 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
 interface SegmentedControlProps {
   options: string[];
   activeOption: string;
   onSelect: (option: string) => void;
+  style?: ViewStyle;
 }
 
-export function SegmentedControl({ options, activeOption, onSelect }: SegmentedControlProps) {
+export function SegmentedControl({ options, activeOption, onSelect, style }: SegmentedControlProps) {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.container, { borderColor: theme.border }]}>
+    <View style={[styles.container, { borderColor: theme.border }, style]}>
       {options.map((opt, i) => {
         const isActive = opt === activeOption;
         return (

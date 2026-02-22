@@ -85,18 +85,19 @@ jest.mock('expo-haptics', () => ({
 
 jest.mock('./src/theme/ThemeContext', () => {
   const { darkTheme } = require('./src/theme/colors');
+  const mockValue = {
+    theme: darkTheme,
+    isDark: true,
+    toggleTheme: jest.fn(),
+    useFlats: false,
+    toggleFlats: jest.fn(),
+    isLeftHanded: false,
+    toggleLeftHanded: jest.fn(),
+    capo: 0,
+    setCapo: jest.fn(),
+  };
   return {
-    useTheme: () => ({
-      theme: darkTheme,
-      isDark: true,
-      toggleTheme: jest.fn(),
-      useFlats: false,
-      toggleFlats: jest.fn(),
-      isLeftHanded: false,
-      toggleLeftHanded: jest.fn(),
-      capo: 0,
-      setCapo: jest.fn(),
-    }),
+    useTheme: jest.fn(() => mockValue),
     ThemeProvider: ({ children }: any) => children,
   };
 });

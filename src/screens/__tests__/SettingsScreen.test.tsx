@@ -82,4 +82,91 @@ describe('SettingsScreen', () => {
     act(() => { buttons[buttons.length - 1].props.onPress(); }); // last button = Glossary row
     expect(onOpenGlossary).toHaveBeenCalledTimes(1);
   });
+
+  test('Bug 6 — pressing ♭ (inactive) calls toggleFlats; pressing ♯ (already active) does not', () => {
+    const noop = () => {};
+    let tree: any;
+    act(() => { tree = create(<SettingsScreen onClose={noop} onOpenGlossary={noop} />); });
+
+    const { toggleFlats } = (require('../../theme/ThemeContext').useTheme as jest.Mock)();
+    (toggleFlats as jest.Mock).mockClear();
+
+    // Press '♭' — not active (useFlats=false → '♯' is active), so toggleFlats SHOULD be called
+    const flatBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === '♭')[0];
+    act(() => { flatBtn.props.onPress(); });
+    expect(toggleFlats).toHaveBeenCalledTimes(1);
+
+    (toggleFlats as jest.Mock).mockClear();
+
+    // Press '♯' — already active, so toggleFlats should NOT be called
+    const sharpBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === '♯')[0];
+    act(() => { sharpBtn.props.onPress(); });
+    expect(toggleFlats).toHaveBeenCalledTimes(0);
+  });
+
+  test('Left-handed option calls toggleLeftHanded; Right-handed (already active) does not', () => {
+    const noop = () => {};
+    let tree: any;
+    act(() => { tree = create(<SettingsScreen onClose={noop} onOpenGlossary={noop} />); });
+    const { toggleLeftHanded } = (require('../../theme/ThemeContext').useTheme as jest.Mock)();
+    (toggleLeftHanded as jest.Mock).mockClear();
+
+    // isLeftHanded=false → 'Right-handed' is active → pressing it does NOT call toggle
+    const rightBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Right-handed')[0];
+    act(() => { rightBtn.props.onPress(); });
+    expect(toggleLeftHanded).toHaveBeenCalledTimes(0);
+
+    // Pressing 'Left-handed' DOES call toggle
+    const leftBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Left-handed')[0];
+    act(() => { leftBtn.props.onPress(); });
+    expect(toggleLeftHanded).toHaveBeenCalledTimes(1);
+  });
+
+  test('Dark option does not call toggleTheme (already active); Light does', () => {
+    const noop = () => {};
+    let tree: any;
+    act(() => { tree = create(<SettingsScreen onClose={noop} onOpenGlossary={noop} />); });
+    const { toggleTheme } = (require('../../theme/ThemeContext').useTheme as jest.Mock)();
+    (toggleTheme as jest.Mock).mockClear();
+
+    // isDark=true → 'Dark' is active → pressing it does NOT call toggle
+    const darkBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Dark')[0];
+    act(() => { darkBtn.props.onPress(); });
+    expect(toggleTheme).toHaveBeenCalledTimes(0);
+
+    // Pressing 'Light' DOES call toggle
+    const lightBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Light')[0];
+    act(() => { lightBtn.props.onPress(); });
+    expect(toggleTheme).toHaveBeenCalledTimes(1);
+  });
+
+  test('Capo + increases value; − decreases it', () => {
+    const noop = () => {};
+    let tree: any;
+    act(() => { tree = create(<SettingsScreen onClose={noop} onOpenGlossary={noop} />); });
+    const { setCapo } = (require('../../theme/ThemeContext').useTheme as jest.Mock)();
+    (setCapo as jest.Mock).mockClear();
+
+    const increaseBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Increase capo')[0];
+    act(() => { increaseBtn.props.onPress(); });
+    expect(setCapo).toHaveBeenCalledWith(1); // Math.min(7, 0+1) = 1
+
+    (setCapo as jest.Mock).mockClear();
+    const decreaseBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Decrease capo')[0];
+    act(() => { decreaseBtn.props.onPress(); });
+    expect(setCapo).toHaveBeenCalledWith(0); // Math.max(0, 0-1) = 0
+  });
+
+  test('Capo − at 0 does not go below 0', () => {
+    const noop = () => {};
+    let tree: any;
+    act(() => { tree = create(<SettingsScreen onClose={noop} onOpenGlossary={noop} />); });
+    const { setCapo } = (require('../../theme/ThemeContext').useTheme as jest.Mock)();
+    (setCapo as jest.Mock).mockClear();
+
+    const decreaseBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Decrease capo')[0];
+    act(() => { decreaseBtn.props.onPress(); });
+    expect(setCapo).toHaveBeenCalledWith(0);
+    expect(setCapo).not.toHaveBeenCalledWith(-1);
+  });
 });
