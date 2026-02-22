@@ -5,3 +5,4 @@ export { ChipPicker } from './ChipPicker';
 export { SegmentedControl } from './SegmentedControl';
 export { ChordPreview } from './ChordPreview';
 export { ChordDiagram } from './ChordDiagram';
+export { RootPicker } from './RootPicker';

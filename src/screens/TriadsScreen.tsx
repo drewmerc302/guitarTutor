@@ -5,17 +5,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../theme/ThemeContext';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { ChipPicker, SegmentedControl, FretboardViewer } from '../components';
+import { ChipPicker, SegmentedControl, FretboardViewer, RootPicker } from '../components';
 import { TRIAD_TYPES, computeTriadPositions } from '../engine/triads';
 import { assignFingers } from '../engine/fingers';
-import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
 export function TriadsScreen() {
-  const { theme, useFlats } = useTheme();
+  const { theme } = useTheme();
   const [root, setRoot] = usePersistentState<number>('triads.root', 0);
   const [type, setType] = usePersistentState<string>('triads.type', 'Major');
   const [stringGroup, setStringGroup] = usePersistentState<string>('triads.stringGroup', 'all');
@@ -48,6 +47,22 @@ export function TriadsScreen() {
     return computeTriadPositions(root, intervals, stringGroups, inversion);
   }, [root, intervals, stringGroups, inversion]);
 
+  // When a specific string group is selected, the engine may return multiple valid shapes
+  // (e.g. A Major on strings 1-2-3 yields shapes at fret 2 and fret 14). Each shape is
+  // exactly 3 consecutive notes in the flat array. Pick only the shape closest to the nut
+  // so the view defaults near the nut, consistent with Chords voicing selection.
+  const closestNotes = useMemo(() => {
+    if (stringGroup === 'all' || notes.length === 0) return notes;
+    let closestStart = 0;
+    let closestMin = Infinity;
+    for (let i = 0; i < notes.length; i += 3) {
+      const nonZero = notes.slice(i, i + 3).map(n => n.fret).filter(f => f > 0);
+      const min = nonZero.length > 0 ? Math.min(...nonZero) : 0;
+      if (min < closestMin) { closestMin = min; closestStart = i; }
+    }
+    return notes.slice(closestStart, closestStart + 3);
+  }, [notes, stringGroup]);
+
   const displayNotes = useMemo(() => {
     if (display.toLowerCase() === 'finger') {
       const notesCopy = [...notes];
@@ -58,20 +73,15 @@ export function TriadsScreen() {
   }, [notes, display]);
 
   const boxHighlights = useMemo(() => {
-    // Bug 2 fix: 'All Strings' shows all positions combined — don't force a scroll region
+    // 'All Strings' shows all positions combined — don't force a scroll region
     if (stringGroup === 'all') return [];
-    const frets = notes.map(n => n.fret).filter(f => f > 0);
-    // Bug 1 fix: notes exist but all at fret 0 — send a sentinel to scroll to nut.
-    // This sentinel handles the edge case where the engine returns only fret-0 notes
-    // for a specific string group — currently not produced by computeTriadPositions
-    // but kept as defensive code.
+    const frets = closestNotes.map(n => n.fret).filter(f => f > 0);
+    // Edge case: notes exist but all at fret 0 — send sentinel to scroll to nut
     if (frets.length === 0) {
-      return notes.length > 0 ? [{ fretStart: 0, fretEnd: 0 }] : [];
+      return closestNotes.length > 0 ? [{ fretStart: 0, fretEnd: 0 }] : [];
     }
-    const minFret = Math.min(...frets);
-    const maxFret = Math.max(...frets);
-    return [{ fretStart: minFret, fretEnd: maxFret }];
-  }, [notes, stringGroup]);
+    return [{ fretStart: Math.min(...frets), fretEnd: Math.max(...frets) }];
+  }, [closestNotes, stringGroup]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
@@ -80,12 +90,7 @@ export function TriadsScreen() {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Triads</Text>
         </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <ChipPicker
-          options={useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES}
-          activeOption={(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}
-          onSelect={(n) => setRoot((useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES).indexOf(n))}
-        />
+        <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
         <ChipPicker options={triadTypes} activeOption={type} onSelect={setType} />
@@ -101,7 +106,7 @@ export function TriadsScreen() {
           }}
           accessibilityLabel="Toggle advanced options"
         >
-          <Text style={[styles.advancedLabel, { color: theme.textMuted }]}>Advanced</Text>
+          <Text style={[styles.advancedLabel, { color: theme.textSecondary }]}>Advanced</Text>
           <MaterialCommunityIcons
             name={advancedOpen ? 'chevron-down' : 'chevron-right'}
             size={18}
@@ -162,5 +167,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
   },
-  advancedLabel: { fontSize: 14, fontWeight: '500' },
+  advancedLabel: { fontSize: 14, fontWeight: '600' },
 });

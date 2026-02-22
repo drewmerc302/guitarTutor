@@ -17,7 +17,7 @@ describe('ScalesScreen', () => {
     expect(JSON.stringify(tree.toJSON())).toContain('Scales');
   });
 
-  test('renders all 12 notes', () => {
+  test('renders 7 natural notes for root selection', () => {
     let tree: any;
     act(() => { tree = create(<ScalesScreen />); });
     const json = JSON.stringify(tree.toJSON());

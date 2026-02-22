@@ -1,6 +1,6 @@
 # Guitar Tutor — TODO & Feature Ideas
 
-**Last updated:** 2026-02-22 (session 3)
+**Last updated:** 2026-02-22 (session 4)
 
 ---
 
@@ -51,7 +51,7 @@ These are well-defined enough to brainstorm in a single session and then impleme
 | **Favorites / Bookmarks** — save root+type+mode combinations | Pick: navigation model, storage scope, UI |
 | **Scale tab notation** — show scale as guitar tab numbers | Pick: scroll vs grid, which positions shown |
 | **Chord transition helper** — highlight shared/moving fingers between two chords | Pick: where it lives, color model |
-| **Chords root picker — 7-note + ♯/♭ toggle** — replace the 12-note horizontal scroll with the 7 natural notes | Pick: toggle style (two symbols vs segmented control), whether accidentals hide naturals or show both |
+| **Chords root picker — 7-note + ♯/♭ toggle** — replace the 12-note horizontal scroll with the 7 natural notes | ✅ Done — shared `RootPicker` component across all 4 screens |
 | **Arpeggios display rethink** — current view highlights all notes at once making the fretboard confusing | Brainstorm: single-string-at-a-time animation, step-through mode, or note-by-note reveal |
 
 ---
@@ -82,7 +82,13 @@ These items can't be fully designed until a larger architectural question is res
 
 ---
 
-## Recently Fixed (2026-02-22)
+## Recently Fixed (2026-02-22, session 4)
+
+- ✅ Root picker — 7 natural notes + ♯/♭ toggle — shared `RootPicker` component (`src/components/RootPicker.tsx`) replaces the 12-note scrolling ChipPicker on all four screens (Chords, Scales, Arpeggios, Triads); ♯/♭ buttons sit inline left-aligned next to the "Root" label; accidental state is internal to the component; `onDisplayNameChange` callback lets ChordsScreen keep its voicing label correct; removed `useFlats` + `NOTE_NAMES_FLAT` from all four screens
+
+---
+
+## Recently Fixed (2026-02-22, session 3)
 
 - ✅ Integration test suite (all screens) — full button-level tests + 6 bug-catching red-green pairs across all 6 screen test files; 212/212 tests passing
 - ✅ Bug 1: Triads 2nd Inv blank fretboard — `boxHighlights` sentinel `[{fretStart:0,fretEnd:0}]` when all frets are zero — `0609629`

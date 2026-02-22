@@ -162,6 +162,36 @@ describe('TriadsScreen', () => {
     expect(sg234BtnAfter.props.accessibilityState?.selected).toBe(true);
   });
 
+  test('Bug — A Major strings 1-2-3 Root Pos: all shapes rendered but boxHighlights defaults to closest-to-nut', () => {
+    // A Major on strings 1-2-3 produces two valid shapes: frets [2,2,2] and [14,14,14].
+    // Before fix: boxHighlights = [{fretStart:2, fretEnd:14}] → viewport centers on empty neck.
+    // After fix: all 6 notes rendered (both shapes visible on scroll), but boxHighlights
+    //            targets only the closest shape so the view opens near the nut.
+    let tree: any;
+    act(() => { tree = create(<TriadsScreen />); });
+
+    // Select A (root=9) via RootPicker
+    const aBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'A')[0];
+    act(() => { aBtn.props.onPress(); });
+
+    // Open Advanced, select strings 1-2-3
+    const advBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Toggle advanced options')[0];
+    act(() => { advBtn.props.onPress(); });
+    const sg123Btn = tree.root.findAll((n: any) => n.props.accessibilityLabel === '1-2-3')[0];
+    act(() => { sg123Btn.props.onPress(); });
+
+    const FV = (_FV as any).type;
+    const fv = tree.root.findByType(FV);
+
+    // All notes (both shapes) should be rendered
+    expect(fv.props.notes.length).toBeGreaterThan(3);
+
+    // boxHighlights must anchor to the nut-closest shape, not span the full range
+    const highlights = fv.props.boxHighlights as { fretStart: number; fretEnd: number }[];
+    expect(highlights.length).toBe(1);
+    expect(highlights[0].fretEnd).toBeLessThan(10);
+  });
+
   test('selecting string group 3-4-5 marks it as selected', () => {
     let tree: any;
     act(() => { tree = create(<TriadsScreen />); });

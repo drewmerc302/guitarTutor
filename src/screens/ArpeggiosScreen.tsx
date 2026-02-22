@@ -4,14 +4,13 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { ChipPicker, SegmentedControl, FretboardViewer } from '../components';
+import { ChipPicker, SegmentedControl, FretboardViewer, RootPicker } from '../components';
 import { ARP_TYPES } from '../engine/arpeggios';
 import { getNotesOnFretboard } from '../engine/fretboard';
 import { assignSweepOrder } from '../engine/fingers';
-import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 export function ArpeggiosScreen() {
-  const { theme, useFlats } = useTheme();
+  const { theme } = useTheme();
   const [root, setRoot] = usePersistentState<number>('arpeggios.root', 0);
   const [type, setType] = usePersistentState<string>('arpeggios.type', 'Major');
   const [display, setDisplay] = usePersistentState<string>('arpeggios.display', 'interval');
@@ -34,12 +33,7 @@ export function ArpeggiosScreen() {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Arpeggios</Text>
         </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <ChipPicker
-          options={useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES}
-          activeOption={(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}
-          onSelect={(n) => setRoot((useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES).indexOf(n))}
-        />
+        <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
         <ChipPicker options={arpTypes} activeOption={type} onSelect={setType} />

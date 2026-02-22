@@ -56,38 +56,33 @@ describe('ArpeggiosScreen', () => {
   test('selecting a note updates active note highlight', () => {
     let tree: any;
     act(() => { tree = create(<ArpeggiosScreen />); });
-    const root = tree.root;
 
-    const initialButtons = root.findAllByType('TouchableOpacity');
-    const activeStyle = JSON.stringify([].concat(...initialButtons[0].props.style));
-    const inactiveStyle = JSON.stringify([].concat(...initialButtons[1].props.style));
-    expect(activeStyle).not.toEqual(inactiveStyle); // C is active, C# is not
+    // C is active by default
+    const cBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'C')[0];
+    expect(cBtn.props.accessibilityState?.selected).toBe(true);
 
-    act(() => { initialButtons[2].props.onPress(); }); // press D
+    const dBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'D')[0];
+    expect(dBtn.props.accessibilityState?.selected).toBe(false);
 
-    const updatedButtons = root.findAllByType('TouchableOpacity');
-    const newActiveStyle = JSON.stringify([].concat(...updatedButtons[2].props.style));
-    const prevActiveStyle = JSON.stringify([].concat(...updatedButtons[0].props.style));
-    expect(newActiveStyle).not.toEqual(prevActiveStyle);
+    act(() => { dBtn.props.onPress(); });
+
+    const dBtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'D')[0];
+    expect(dBtnAfter.props.accessibilityState?.selected).toBe(true);
   });
 
   test('selecting an arpeggio type updates active type highlight', () => {
     let tree: any;
     act(() => { tree = create(<ArpeggiosScreen />); });
-    const root = tree.root;
 
-    // 0-11: note chips, 12+: type chips. Major (index 12) active by default.
-    const initialButtons = root.findAllByType('TouchableOpacity');
-    const majorStyle = JSON.stringify([].concat(...initialButtons[12].props.style));
-    const dom7Style = JSON.stringify([].concat(...initialButtons[14].props.style));
-    expect(majorStyle).not.toEqual(dom7Style);
+    const majorBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Major')[0];
+    const dom7Btn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Dom7')[0];
+    expect(majorBtn.props.accessibilityState?.selected).toBe(true);
+    expect(dom7Btn.props.accessibilityState?.selected).toBe(false);
 
-    act(() => { initialButtons[14].props.onPress(); }); // press Dom7
+    act(() => { dom7Btn.props.onPress(); });
 
-    const updatedButtons = root.findAllByType('TouchableOpacity');
-    const newDom7Style = JSON.stringify([].concat(...updatedButtons[14].props.style));
-    const prevMajorStyle = JSON.stringify([].concat(...updatedButtons[12].props.style));
-    expect(newDom7Style).not.toEqual(prevMajorStyle);
+    const dom7BtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Dom7')[0];
+    expect(dom7BtnAfter.props.accessibilityState?.selected).toBe(true);
   });
 
   // --- Sweep order tests ---

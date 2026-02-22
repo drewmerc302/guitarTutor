@@ -4,17 +4,16 @@ import { usePersistentState } from '../hooks/usePersistentState';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { ChipPicker, SegmentedControl, FretboardViewer } from '../components';
+import { ChipPicker, SegmentedControl, FretboardViewer, RootPicker } from '../components';
 import { SCALE_TYPES, MODE_NAMES, applyModeRotation, computeScalePositions } from '../engine/scales';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
 export function ScalesScreen() {
-  const { theme, useFlats } = useTheme();
+  const { theme } = useTheme();
   const [root, setRoot] = usePersistentState<number>('scales.root', 0);
   const [type, setType] = usePersistentState<string>('scales.type', 'Major');
   const [mode, setMode] = usePersistentState<number>('scales.mode', 0);
@@ -95,8 +94,6 @@ export function ScalesScreen() {
     }
   };
 
-  const noteNames = useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES;
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -104,12 +101,7 @@ export function ScalesScreen() {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Scales</Text>
         </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Root</Text>
-        <ChipPicker
-          options={noteNames}
-          activeOption={noteNames[root]}
-          onSelect={(n) => setRoot(noteNames.indexOf(n))}
-        />
+        <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
         <ChipPicker options={scaleTypes} activeOption={type} onSelect={setType} />
@@ -136,7 +128,7 @@ export function ScalesScreen() {
           }}
           accessibilityLabel="Toggle advanced options"
         >
-          <Text style={[styles.advancedLabel, { color: theme.textMuted }]}>Advanced</Text>
+          <Text style={[styles.advancedLabel, { color: theme.textSecondary }]}>Advanced</Text>
           <MaterialCommunityIcons
             name={advancedOpen ? 'chevron-down' : 'chevron-right'}
             size={18}
@@ -185,5 +177,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
   },
-  advancedLabel: { fontSize: 14, fontWeight: '500' },
+  advancedLabel: { fontSize: 14, fontWeight: '600' },
 });

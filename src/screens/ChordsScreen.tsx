@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { FretboardViewer, RootPicker, ChordPreview } from '../components';
+import { FretboardViewer, RootPicker, ChordDiagram } from '../components';
 import { ChipPicker } from '../components/ChipPicker';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { CHORD_TYPES, getChordVoicings, buildVoicingRegions, ChordVoicing } from '../engine/chords';
@@ -159,13 +159,16 @@ export function ChordsScreen() {
         </View>
 
         {activeVoicing && (
-          <View style={styles.diagramContainer}>
+          <View style={[styles.diagramContainer, { backgroundColor: theme.bgSecondary }]}>
             <Text style={[styles.diagramChordName, { color: theme.textSecondary }]}>
               {`${activeRootName} ${type}`}
             </Text>
-            <ChordPreview
+            <ChordDiagram
               voicing={activeVoicing}
               root={root}
+              width={180}
+              height={224}
+              displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
             />
           </View>
         )}
@@ -211,8 +214,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   diagramContainer: {
+    alignSelf: 'center',
     alignItems: 'center',
     marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
   },
   diagramChordName: {
     fontSize: 16,
