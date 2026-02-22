@@ -37,7 +37,7 @@ describe('getNotesOnFretboard', () => {
   test('no notes beyond TOTAL_FRETS', () => {
     const notes = getNotesOnFretboard(0, [0, 4, 7]);
     for (const n of notes) {
-      expect(n.fret).toBeLessThanOrEqual(15);
+      expect(n.fret).toBeLessThanOrEqual(24);
       expect(n.fret).toBeGreaterThanOrEqual(0);
     }
   });

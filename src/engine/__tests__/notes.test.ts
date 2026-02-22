@@ -16,8 +16,8 @@ describe('notes', () => {
     expect(STRING_NAMES).toEqual(['E','B','G','D','A','E']);
   });
 
-  test('TOTAL_FRETS is 15', () => {
-    expect(TOTAL_FRETS).toBe(15);
+  test('TOTAL_FRETS is 24', () => {
+    expect(TOTAL_FRETS).toBe(24);
   });
 
   test('noteValue computes correct note at string/fret position', () => {

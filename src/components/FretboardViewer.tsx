@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { GuitarNeck } from './GuitarNeck';
+import { TOTAL_FRETS } from '../engine/tuning';
 
 interface FretboardViewerProps {
   notes: Parameters<typeof GuitarNeck>[0]['notes'];
@@ -21,7 +22,7 @@ const FB = {
   fretWidth: 60,
 };
 
-const FRETBOARD_WIDTH = FB.padLeft + 16 * FB.fretWidth + FB.padRight;
+const FRETBOARD_WIDTH = FB.padLeft + (TOTAL_FRETS + 1) * FB.fretWidth + FB.padRight;
 
 function getMinFretFromVoicing(activeVoicing?: Set<string>): number {
   if (!activeVoicing || activeVoicing.size === 0) return 0;
