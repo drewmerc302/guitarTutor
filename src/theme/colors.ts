@@ -309,10 +309,10 @@ const fretboardLight: ThemeColors = {
 
 // ─── Palette registry ────────────────────────────────────────────────────────
 
-export type PaletteName = 'Original' | 'Modern Blue' | 'Warm Neutral' | 'Modern iOS' | 'Dark Premium' | 'Fretboard';
+export type PaletteName = 'Warm' | 'Modern Blue' | 'Warm Neutral' | 'Modern iOS' | 'Dark Premium' | 'Fretboard';
 
 export const PALETTE_NAMES: PaletteName[] = [
-  'Original',
+  'Warm',
   'Modern Blue',
   'Warm Neutral',
   'Modern iOS',
@@ -321,7 +321,7 @@ export const PALETTE_NAMES: PaletteName[] = [
 ];
 
 export const PALETTES: Record<PaletteName, { dark: ThemeColors; light: ThemeColors }> = {
-  'Original':      { dark: darkTheme,         light: lightTheme },
+  'Warm':         { dark: darkTheme,         light: lightTheme },
   'Modern Blue':   { dark: modernBlueDark,    light: modernBlueLight },
   'Warm Neutral':  { dark: warmNeutralDark,   light: warmNeutralLight },
   'Modern iOS':    { dark: modernIOSDark,     light: modernIOSLight },
