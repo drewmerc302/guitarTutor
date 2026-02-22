@@ -1,6 +1,7 @@
 // src/screens/ScalesScreen.tsx
 import React, { useState, useMemo } from 'react';
 import { usePersistentState } from '../hooks/usePersistentState';
+import { useResponsive } from '../hooks/useResponsive';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
@@ -14,6 +15,7 @@ if (Platform.OS === 'android') {
 
 export function ScalesScreen() {
   const { theme } = useTheme();
+  const { isTablet } = useResponsive();
   const [root, setRoot] = usePersistentState<number>('scales.root', 0);
   const [type, setType] = usePersistentState<string>('scales.type', 'Major');
   const [mode, setMode] = usePersistentState<number>('scales.mode', 0);
@@ -96,64 +98,68 @@ export function ScalesScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>Scales</Text>
-        </View>
+      <ScrollView contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}>
+        <View style={[styles.mainRow, isTablet && styles.mainRowTablet]}>
+          <View style={[styles.controlsPanel, isTablet && styles.controlsPanelTablet]}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: theme.textPrimary }]}>Scales</Text>
+            </View>
 
-        <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
+            <RootPicker root={root} onRootChange={(r) => setRoot(r)} />
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
-        <ChipPicker options={scaleTypes} activeOption={type} onSelect={setType} />
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Type</Text>
+            <ChipPicker options={scaleTypes} activeOption={type} onSelect={setType} />
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
-        <SegmentedControl options={['Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
+            <SegmentedControl options={['Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Position</Text>
-        <ChipPicker
-          multiSelect
-          options={positionOptions}
-          activeOptions={activeChipOptions}
-          onToggle={handlePositionChipToggle}
-        />
-        <Text style={[styles.hint, { color: theme.textMuted }]}>
-          A box is a scale pattern that fits within a small section of the neck. Select a numbered box to focus on that region — tap multiple to compare them side by side.
-        </Text>
-
-        <TouchableOpacity
-          style={[styles.advancedToggle, { backgroundColor: theme.bgTertiary }]}
-          onPress={() => {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setAdvancedOpen(v => !v);
-          }}
-          accessibilityLabel="Toggle advanced options"
-        >
-          <Text style={[styles.advancedLabel, { color: theme.textSecondary }]}>Advanced</Text>
-          <MaterialCommunityIcons
-            name={advancedOpen ? 'chevron-down' : 'chevron-right'}
-            size={18}
-            color={theme.textMuted}
-          />
-        </TouchableOpacity>
-
-        {advancedOpen && is7Note && (
-          <>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Mode</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Position</Text>
             <ChipPicker
-              options={MODE_NAMES}
-              activeOption={MODE_NAMES[mode]}
-              onSelect={(m) => setMode(MODE_NAMES.indexOf(m))}
+              multiSelect
+              options={positionOptions}
+              activeOptions={activeChipOptions}
+              onToggle={handlePositionChipToggle}
             />
-          </>
-        )}
+            <Text style={[styles.hint, { color: theme.textMuted }]}>
+              A box is a scale pattern that fits within a small section of the neck. Select a numbered box to focus on that region — tap multiple to compare them side by side.
+            </Text>
 
-        <View style={styles.neckContainer}>
-          <FretboardViewer
-            notes={isAllActive ? positions.flatMap(p => p.notes) : Array.from(activePositions).flatMap(key => positions[parseInt(key)]?.notes || [])}
-            displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
-            activeNoteSet={activeNoteSet}
-            boxHighlights={boxHighlights}
-          />
+            <TouchableOpacity
+              style={[styles.advancedToggle, { backgroundColor: theme.bgTertiary }]}
+              onPress={() => {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                setAdvancedOpen(v => !v);
+              }}
+              accessibilityLabel="Toggle advanced options"
+            >
+              <Text style={[styles.advancedLabel, { color: theme.textSecondary }]}>Advanced</Text>
+              <MaterialCommunityIcons
+                name={advancedOpen ? 'chevron-down' : 'chevron-right'}
+                size={18}
+                color={theme.textMuted}
+              />
+            </TouchableOpacity>
+
+            {advancedOpen && is7Note && (
+              <>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>Mode</Text>
+                <ChipPicker
+                  options={MODE_NAMES}
+                  activeOption={MODE_NAMES[mode]}
+                  onSelect={(m) => setMode(MODE_NAMES.indexOf(m))}
+                />
+              </>
+            )}
+          </View>
+
+          <View style={[styles.neckContainer, isTablet && styles.neckContainerTablet]}>
+            <FretboardViewer
+              notes={isAllActive ? positions.flatMap(p => p.notes) : Array.from(activePositions).flatMap(key => positions[parseInt(key)]?.notes || [])}
+              displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
+              activeNoteSet={activeNoteSet}
+              boxHighlights={boxHighlights}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -163,10 +169,16 @@ export function ScalesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
+  contentTablet: { paddingHorizontal: 24, paddingBottom: 32 },
+  mainRow: { flexDirection: 'column' },
+  mainRowTablet: { flexDirection: 'row', alignItems: 'flex-start' },
+  controlsPanel: { width: '100%' },
+  controlsPanelTablet: { width: '40%', paddingRight: 24 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
   neckContainer: { alignItems: 'center', marginTop: 24 },
+  neckContainerTablet: { flex: 1, marginTop: 0 },
   hint: { fontSize: 12, lineHeight: 17, marginTop: 10 },
   advancedToggle: {
     flexDirection: 'row',
