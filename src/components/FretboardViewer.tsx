@@ -55,12 +55,9 @@ function FretboardViewerInner(props: FretboardViewerProps) {
 
   useEffect(() => {
     if (canScroll && scrollViewRef.current && props.boxHighlights && props.boxHighlights.length > 0) {
+      // Scroll to the LOWEST (closest to nut) box position
       const minFret = Math.min(...props.boxHighlights.map(b => b.fretStart));
-      const maxFret = Math.max(...props.boxHighlights.map(b => b.fretEnd));
-      const startX = FB.padLeft + minFret * FB.fretWidth;
-      const endX = FB.padLeft + (maxFret + 1) * FB.fretWidth;
-      const centerX = (startX + endX) / 2;
-      const scrollX = Math.max(0, centerX - screenWidth / 2);
+      const scrollX = Math.max(0, FB.padLeft + minFret * FB.fretWidth - 20);
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: scrollX, animated: true });
       }, 0);

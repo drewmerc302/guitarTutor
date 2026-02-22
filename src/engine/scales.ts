@@ -82,9 +82,37 @@ export function computeScalePositions(root: number, intervals: number[]): ScaleP
     forwardStarts.push(current);
   }
 
-  // For 24 frets, all boxes fit naturally - no wrapping needed
-  // Just use forwardStarts directly
-  const allStarts = forwardStarts;
+  // Wrap boxes that would exceed fret 15 back toward nut
+  const validStarts: number[] = [];
+  const wrappedStarts: number[] = [];
+  let searchFrom = baseRootE;
+  
+  for (const s of forwardStarts) {
+    if (s > 15) {
+      // This box would be too high - wrap it back toward nut
+      const prev = prevBoxStart(searchFrom);
+      if (prev !== null) {
+        wrappedStarts.push(prev);
+        searchFrom = prev;
+      } else {
+        validStarts.push(s);
+      }
+    } else {
+      validStarts.push(s);
+      searchFrom = s;
+    }
+  }
+
+  // Combine, deduplicate, sort ascending by fret position
+  const allStartsSet = new Set([...validStarts, ...wrappedStarts]);
+  const allStartsAsc = Array.from(allStartsSet).sort((a, b) => a - b);
+
+  // Reorder so Box 1 starts at the root position on low E, then ascend,
+  // with any wrapped (lower-fret) boxes cycling to the end.
+  const rootIdx = allStartsAsc.indexOf(baseRootE);
+  const allStarts = rootIdx >= 0
+    ? [...allStartsAsc.slice(rootIdx), ...allStartsAsc.slice(0, rootIdx)]
+    : allStartsAsc;
 
   // Build ScalePosition objects - first pass: original boxes
   const positions: ScalePosition[] = [];

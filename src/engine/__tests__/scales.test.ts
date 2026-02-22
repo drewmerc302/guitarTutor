@@ -38,12 +38,12 @@ describe('applyModeRotation', () => {
 });
 
 describe('computeScalePositions', () => {
-  test('returns positions for C major with all 7 box positions plus octave repeats', () => {
+  test('returns positions for C major with boxes wrapped to fit neck', () => {
     // C major: low E (open=4), C=0, root at fret 8.
-    // With TOTAL_FRETS=24, boxes go up the neck and repeat at +12 frets.
+    // With wrapping at fret 15, some boxes wrap to lower positions.
     const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
-    // 7 original boxes + octave repeats that fit
-    expect(positions.length).toBeGreaterThanOrEqual(7);
+    // At least 5 unique box positions (some may wrap)
+    expect(positions.length).toBeGreaterThanOrEqual(5);
     for (const pos of positions) {
       expect(pos.fretStart).toBeLessThanOrEqual(TOTAL_FRETS);
     }
