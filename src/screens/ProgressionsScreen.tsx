@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Text as SvgText, G } from 'react-native-svg';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { useTheme } from '../theme/ThemeContext';
+import { useResponsive } from '../hooks/useResponsive';
 import { getChordQualityColor } from '../theme/colors';
 import { ChordDiagram } from '../components';
 import { getDiatonicChords, CIRCLE_OF_FIFTHS } from '../engine/progressions';
@@ -13,6 +14,7 @@ import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
 export function ProgressionsScreen() {
   const { theme, useFlats, isDark } = useTheme();
+  const { isTablet } = useResponsive();
   const [root, setRoot] = usePersistentState<number>('progressions.root', 0);
   // Each entry is a diatonic chord index; duplicates allowed
   const [progression, setProgression] = useState<number[]>([]);
@@ -44,7 +46,8 @@ export function ProgressionsScreen() {
   };
 
   const { width: screenWidth } = useWindowDimensions();
-  const svgSize = screenWidth - 32; // account for 16px padding on each side
+  const baseSize = isTablet ? Math.min(screenWidth * 0.5, 500) : screenWidth - 32;
+  const svgSize = baseSize;
 
   const renderCircleOfFifths = () => {
     // Use fixed viewBox coordinates; SVG scales to svgSize
@@ -225,86 +228,89 @@ export function ProgressionsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>Progressions</Text>
-        </View>
+      <ScrollView contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}>
+        <View style={[styles.mainRow, isTablet && styles.mainRowTablet]}>
+          <View style={[styles.controlsPanel, isTablet && styles.controlsPanelTablet]}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: theme.textPrimary }]}>Progressions</Text>
+            </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Diatonic Chords</Text>
-        <Text style={[styles.hint, { color: theme.textMuted }]}>These 7 chords all belong to the key of {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}. Tap any to add it to your progression.</Text>
-        <View style={styles.numeralRow}>
-          {diatonicChords.map((chord, index) => {
-            const isActive = progression.includes(index);
-            return (
-              <TouchableOpacity
-                key={index}
-                testID="diatonic-btn"
-                style={[
-                  styles.numeralButton,
-                  {
-                    backgroundColor: isActive ? theme.bgElevated : theme.bgSecondary,
-                    borderColor: isActive ? theme.accent : theme.border,
-                    borderBottomColor: getChordQualityColor(chord.quality, isDark),
-                  },
-                ]}
-                onPress={() => appendChord(index)}
-              >
-                <Text style={[styles.numeralText, { color: isActive ? theme.accent : theme.textMuted }]}>
-                  {chord.numeral}
-                </Text>
-                <Text style={[styles.numeralChordName, { color: isActive ? theme.textPrimary : theme.textSecondary }]}>
-                  {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[chord.root]}{chord.quality === 'Minor' ? 'm' : chord.quality === 'Dim' ? '°' : ''}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Diatonic Chords</Text>
+            <Text style={[styles.hint, { color: theme.textMuted }]}>These 7 chords all belong to the key of {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}. Tap any to add it to your progression.</Text>
+            <View style={styles.numeralRow}>
+              {diatonicChords.map((chord, index) => {
+                const isActive = progression.includes(index);
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    testID="diatonic-btn"
+                    style={[
+                      styles.numeralButton,
+                      {
+                        backgroundColor: isActive ? theme.bgElevated : theme.bgSecondary,
+                        borderColor: isActive ? theme.accent : theme.border,
+                        borderBottomColor: getChordQualityColor(chord.quality, isDark),
+                      },
+                    ]}
+                    onPress={() => appendChord(index)}
+                  >
+                    <Text style={[styles.numeralText, { color: isActive ? theme.accent : theme.textMuted }]}>
+                      {chord.numeral}
+                    </Text>
+                    <Text style={[styles.numeralChordName, { color: isActive ? theme.textPrimary : theme.textSecondary }]}>
+                      {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[chord.root]}{chord.quality === 'Minor' ? 'm' : chord.quality === 'Dim' ? '°' : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Progression</Text>
-        <View style={styles.progressionRow}>
-          {progression.map((chordIndex, pos) => {
-            const chord = diatonicChords[chordIndex];
-            const voicing = getVoicing(chord.root, chord.quality);
-            const noteName = (useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[chord.root];
-            const qualitySuffix = chord.quality === 'Dim' ? '°' : chord.quality === 'Minor' ? 'm' : '';
-            return (
-              <TouchableOpacity
-                key={pos}
-                testID="progression-card"
-                onPress={() => removeChordAtPos(pos)}
-                style={[
-                  styles.progressionCard,
-                  {
-                    backgroundColor: theme.bgSecondary,
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.progressionNumeral, { color: theme.textMuted }]}>
-                  {chord.numeral}
-                </Text>
-                <Text style={[styles.progressionChordName, { color: theme.textPrimary }]}>
-                  {noteName}{qualitySuffix}
-                </Text>
-                <ChordDiagram voicing={voicing} root={chord.root} />
-              </TouchableOpacity>
-            );
-          })}
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Progression</Text>
+            <View style={styles.progressionRow}>
+              {progression.map((chordIndex, pos) => {
+                const chord = diatonicChords[chordIndex];
+                const voicing = getVoicing(chord.root, chord.quality);
+                const noteName = (useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[chord.root];
+                const qualitySuffix = chord.quality === 'Dim' ? '°' : chord.quality === 'Minor' ? 'm' : '';
+                return (
+                  <TouchableOpacity
+                    key={pos}
+                    testID="progression-card"
+                    onPress={() => removeChordAtPos(pos)}
+                    style={[
+                      styles.progressionCard,
+                      {
+                        backgroundColor: theme.bgSecondary,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.progressionNumeral, { color: theme.textMuted }]}>
+                      {chord.numeral}
+                    </Text>
+                    <Text style={[styles.progressionChordName, { color: theme.textPrimary }]}>
+                      {noteName}{qualitySuffix}
+                    </Text>
+                    <ChordDiagram voicing={voicing} root={chord.root} />
+                  </TouchableOpacity>
+                );
+              })}
 
-          {/* Placeholder: always shown at the end to hint that tapping a chord adds it */}
-          <View style={[styles.progressionPlaceholder, { borderColor: theme.border }]}>
-            <Text style={[styles.placeholderIcon, { color: theme.textMuted }]}>+</Text>
-            <Text style={[styles.placeholderLabel, { color: theme.textMuted }]}>
-              {progression.length === 0 ? 'Tap a diatonic above' : 'Add more'}
-            </Text>
+              {/* Placeholder: always shown at the end to hint that tapping a chord adds it */}
+              <View style={[styles.progressionPlaceholder, { borderColor: theme.border }]}>
+                <Text style={[styles.placeholderIcon, { color: theme.textMuted }]}>+</Text>
+                <Text style={[styles.placeholderLabel, { color: theme.textMuted }]}>
+                  {progression.length === 0 ? 'Tap a diatonic above' : 'Add more'}
+                </Text>
+              </View>
+            </View>
           </View>
-        </View>
 
-
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Circle of Fifths</Text>
-        <Text style={[styles.hint, { color: theme.textMuted }]}>Tap the circle to change key</Text>
-        <View style={styles.circleContainer}>
-          {renderCircleOfFifths()}
+          <View style={[styles.circleContainer, isTablet && styles.circleContainerTablet]}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Circle of Fifths</Text>
+            <Text style={[styles.hint, { color: theme.textMuted }]}>Tap the circle to change key</Text>
+            {renderCircleOfFifths()}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -314,6 +320,11 @@ export function ProgressionsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
+  contentTablet: { paddingHorizontal: 24, paddingBottom: 32 },
+  mainRow: { flexDirection: 'column' },
+  mainRowTablet: { flexDirection: 'row', alignItems: 'flex-start' },
+  controlsPanel: { width: '100%' },
+  controlsPanelTablet: { width: '50%', paddingRight: 24 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
@@ -384,5 +395,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     width: '100%',
+  },
+  circleContainerTablet: {
+    flex: 1,
+    marginTop: 40,
+    alignItems: 'center',
   },
 });
