@@ -58,9 +58,9 @@ describe('Property-based: all (root, type) combinations', () => {
         expect(voicings.length).toBeGreaterThanOrEqual(1);
       });
 
-      test(`${label}: at most 50 voicings`, () => {
+      test(`${label}: at most 100 voicings`, () => {
         const voicings = getChordVoicings(root, type);
-        expect(voicings.length).toBeLessThanOrEqual(50);
+        expect(voicings.length).toBeLessThanOrEqual(100);
       });
 
       test(`${label}: all voicings have 6 string entries`, () => {

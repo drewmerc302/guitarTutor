@@ -106,12 +106,15 @@ function scorePlayability(voicing: ChordVoicing): number {
   const played = voicing.filter(v => v.f >= 0).length;
   const muted = voicing.filter(v => v.f === -1).length;
 
-  score += muted; // +1 per muted string
   if (fretted.length > 0) {
     score += Math.max(...fretted) - Math.min(...fretted); // +1 per fret of stretch
   }
-  score += countInteriorMutes(voicing) * 2; // +2 per interior gap
+  score += countInteriorMutes(voicing) * 2; // +2 per interior gap (exterior mutes not penalized)
   score -= Math.min(3, Math.max(0, played - 3)); // -1 per extra string beyond 3, capped at -3
+  // Bonus for open-string voicings (practical low-fret shapes)
+  if (voicing.some(v => v.f === 0)) score -= 1;
+  // Bonus for first-position voicings (all fretted notes in frets 1-4)
+  if (fretted.length > 0 && Math.max(...fretted) <= 4) score -= 2;
 
   return score;
 }
@@ -210,7 +213,7 @@ function generateVoicings(root: number, intervals: number[]): ChordVoicing[] {
 
   // Sort by playability score (lower = better), take top 50
   results.sort((a, b) => a.score - b.score);
-  return results.slice(0, 50).map(r => r.voicing);
+  return results.slice(0, 100).map(r => r.voicing);
 }
 
 /**
