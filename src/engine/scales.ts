@@ -34,146 +34,110 @@ export function applyModeRotation(intervals: number[], mode: number): number[] {
     .sort((a, b) => a - b);
 }
 
-/** Compute box positions for a scale across the neck, wrapping overflow boxes back toward nut. */
+/** Internal helper: walk low E string, return N selected anchor frets.
+ * Returns anchors sorted ascending, starting from max(0, idx_root - 1)
+ * so at most 1 anchor below the root is included. */
+function findAnchors(root: number, intervals: number[]): number[] {
+  const intervalSet = new Set(intervals.map(iv => iv % 12));
+  const N = intervals.length;
+
+  // Collect all scale-tone frets on low E string
+  const allAnchors: number[] = [];
+  for (let f = 0; f <= TOTAL_FRETS; f++) {
+    const fromRoot = ((STANDARD_TUNING[5] + f) % 12 - root + 12) % 12;
+    if (intervalSet.has(fromRoot)) allAnchors.push(f);
+  }
+
+  // Find first occurrence of root pitch on low E
+  const idxRoot = allAnchors.findIndex(f => (STANDARD_TUNING[5] + f) % 12 === root % 12);
+
+  // Select N consecutive anchors starting at most 1 below the root
+  const start = Math.max(0, idxRoot - 1);
+  return allAnchors.slice(start, start + N);
+}
+
+/** Compute box positions for a scale across the neck.
+ * Uses computed anchors from the low E string rather than hardcoded offsets.
+ * Returns N boxes (N = intervals.length) sorted by fretStart ascending.
+ * Box 1 = root position on low E; below-root position (if any) = Box N. */
 export function computeScalePositions(root: number, intervals: number[]): ScalePosition[] {
-  const intervalSet = new Set(intervals.map(i => i % 12));
-  const NUM_BOXES = intervals.length;
+  const intervalSet = new Set(intervals.map(iv => iv % 12));
+  const selected = findAnchors(root, intervals);
+  const N = selected.length;
 
-  // Find starting fret of root on low E string
-  const baseRootE = (() => {
-    for (let f = 0; f <= TOTAL_FRETS; f++) {
-      if ((STANDARD_TUNING[5] + f) % 12 === root) return f;
-    }
-    return 0;
-  })();
+  // Find root anchor's index within the selected set
+  const rootIdx = selected.findIndex(f => (STANDARD_TUNING[5] + f) % 12 === root % 12);
 
-  // Helper: find next box start going forward (up the neck) from a given fret
-  function nextBoxStart(from: number): number {
-    const nextMin = from + 2;
-    for (let f = nextMin; f <= nextMin + 3; f++) {
-      for (let s = 0; s < 6; s++) {
-        const noteVal = (STANDARD_TUNING[s] + f) % 12;
-        const fromRoot = (noteVal - root + 12) % 12;
-        if (intervalSet.has(fromRoot)) return f;
-      }
-    }
-    return nextMin;
-  }
-
-  // Helper: find previous box start going backward (toward nut) from a given fret
-  function prevBoxStart(from: number): number | null {
-    // Search from fret 0 up to 3 frets before current position
-    const searchStart = Math.max(0, from - 3);
-    for (let f = searchStart; f < from; f++) {
-      for (let s = 0; s < 6; s++) {
-        const noteVal = (STANDARD_TUNING[s] + f) % 12;
-        const fromRoot = (noteVal - root + 12) % 12;
-        if (intervalSet.has(fromRoot)) return f;
-      }
-    }
-    return null;
-  }
-
-  // Start with Box 1 at baseRootE
-  const boxStarts: number[] = [baseRootE];
-
-  // Generate forward boxes going UP the neck from Box 1
-  let current = baseRootE;
-  for (let i = 1; i < NUM_BOXES; i++) {
-    current = nextBoxStart(current);
-    if (current + 3 <= TOTAL_FRETS) {
-      boxStarts.push(current);
-    }
-  }
-
-  // Generate backward boxes going DOWN toward nut from Box 1
-  const backwardStarts: number[] = [];
-  current = baseRootE;
-  for (let i = 0; i < NUM_BOXES - 1; i++) {
-    const prev = prevBoxStart(current);
-    if (prev !== null) {
-      backwardStarts.push(prev);
-      current = prev;
-    } else {
-      break;
-    }
-  }
-
-  // Keep forward boxes in order (Box 1, Box 2, etc.), append backward boxes at the end
-  // Backward boxes fill in the gaps - if we have 2 backward boxes, they're positions before Box 1
-  const allStarts = [...boxStarts, ...backwardStarts];
-
-  // Build ScalePosition objects
   const positions: ScalePosition[] = [];
-  
-  // First, create forward boxes with labels Box 1, Box 2, etc.
-  for (let i = 0; i < boxStarts.length; i++) {
-    const startFret = boxStarts[i];
-    const endFret = startFret + 3;
-    const boxNotes: FretboardNote[] = [];
 
+  for (let i = 0; i < N; i++) {
+    const anchor = selected[i];
+    // A_next: next anchor above this one; for the highest anchor, wrap to selected[0] + 12
+    const nextAnchor = i < N - 1 ? selected[i + 1] : selected[0] + 12;
+
+    const windowStart = Math.max(0, anchor - 1);
+    const windowEnd = Math.min(TOTAL_FRETS, nextAnchor + 1);
+
+    // Box label: root → Box 1; anchors above → Box 2..N; below-root → Box N
+    let boxNumber: number;
+    if (i === rootIdx) {
+      boxNumber = 1;
+    } else if (i > rootIdx) {
+      boxNumber = i - rootIdx + 1;
+    } else {
+      boxNumber = N; // below-root anchor
+    }
+
+    // Collect notes within dynamic window
+    const boxNotes: FretboardNote[] = [];
     for (let s = 0; s < 6; s++) {
-      for (let f = startFret; f <= Math.min(endFret, TOTAL_FRETS); f++) {
-        const noteValue = (STANDARD_TUNING[s] + f) % 12;
-        const fromRoot = (noteValue - root + 12) % 12;
+      for (let f = windowStart; f <= windowEnd; f++) {
+        const pitch = (STANDARD_TUNING[s] + f) % 12;
+        const fromRoot = (pitch - root + 12) % 12;
         if (intervalSet.has(fromRoot)) {
-          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
+          const ivIdx = intervals.findIndex(iv => iv % 12 === fromRoot);
           boxNotes.push({
-            string: s, fret: f, note: noteValue, interval: fromRoot,
-            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
-            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
+            string: s, fret: f, note: pitch, interval: fromRoot,
+            intervalLabel: INTERVAL_NAMES[intervals[ivIdx]] || INTERVAL_NAMES[fromRoot],
+            isRoot: fromRoot === 0, noteName: NOTE_NAMES[pitch], finger: null,
           });
         }
       }
     }
 
-    assignFingers(boxNotes);
-
-    positions.push({
-      label: `Box ${i + 1}`,
-      fretStart: startFret,
-      fretEnd: endFret,
-      notes: boxNotes,
-    });
-  }
-
-  // Then add backward boxes - they fill the "missing" positions
-  // If we have 5 boxes total but only 3 forward, we add 2 backward with labels Box 4 and Box 5
-  const backwardLabels: string[] = [];
-  for (let i = boxStarts.length; i < NUM_BOXES; i++) {
-    backwardLabels.push(`Box ${NUM_BOXES - (i - boxStarts.length)}`);
-  }
-  
-  for (let i = 0; i < backwardStarts.length; i++) {
-    const startFret = backwardStarts[i];
-    const endFret = startFret + 3;
-    const boxNotes: FretboardNote[] = [];
-
-    for (let s = 0; s < 6; s++) {
-      for (let f = startFret; f <= Math.min(endFret, TOTAL_FRETS); f++) {
-        const noteValue = (STANDARD_TUNING[s] + f) % 12;
-        const fromRoot = (noteValue - root + 12) % 12;
-        if (intervalSet.has(fromRoot)) {
-          const intervalIndex = intervals.findIndex(iv => iv % 12 === fromRoot);
+    // Open-string rule: include fret 0 for scale-tone strings when anchor < 5.
+    // Threshold is strict < 5 (not <= 5) so Box 1 at anchor=5 does not pull in open strings.
+    if (anchor < 5) {
+      for (let s = 0; s < 6; s++) {
+        const pitch = STANDARD_TUNING[s] % 12;
+        const fromRoot = (pitch - root + 12) % 12;
+        if (intervalSet.has(fromRoot) && !boxNotes.some(n => n.string === s && n.fret === 0)) {
+          const ivIdx = intervals.findIndex(iv => iv % 12 === fromRoot);
           boxNotes.push({
-            string: s, fret: f, note: noteValue, interval: fromRoot,
-            intervalLabel: INTERVAL_NAMES[intervals[intervalIndex]] || INTERVAL_NAMES[fromRoot],
-            isRoot: fromRoot === 0, noteName: NOTE_NAMES[noteValue], finger: null,
+            string: s, fret: 0, note: pitch, interval: fromRoot,
+            intervalLabel: INTERVAL_NAMES[intervals[ivIdx]] || INTERVAL_NAMES[fromRoot],
+            isRoot: fromRoot === 0, noteName: NOTE_NAMES[pitch], finger: null,
           });
         }
       }
     }
 
+    if (boxNotes.length === 0) continue;
+
     assignFingers(boxNotes);
 
-    const label = backwardLabels[i] || `Box ${boxStarts.length + i + 1}`;
+    const fretStart = Math.min(...boxNotes.map(n => n.fret));
+    const fretEnd = Math.max(...boxNotes.map(n => n.fret));
+
     positions.push({
-      label: label,
-      fretStart: startFret,
-      fretEnd: endFret,
+      label: `Box ${boxNumber}`,
+      fretStart,
+      fretEnd,
       notes: boxNotes,
     });
   }
 
+  // Sort by fretStart ascending (below-root box appears first/leftmost)
+  positions.sort((a, b) => a.fretStart - b.fretStart);
   return positions;
 }
