@@ -204,4 +204,82 @@ describe('computeScalePositions', () => {
     });
   });
 
+  describe('golden set', () => {
+    describe('Am pentatonic (root 9, intervals [0,3,5,7,10])', () => {
+      // Am pentatonic low-E anchors: [3(G), 5(A=root), 8(C), 10(D), 12(E)]
+      // Box 5 below root at 3, Box 1 at 5, Box 2 at 8, Box 3 at 10, Box 4 at 12
+      let positions: ScalePosition[];
+      beforeEach(() => { positions = computeScalePositions(9, [0, 3, 5, 7, 10]); });
+
+      test('returns exactly 5 positions', () => {
+        expect(positions.length).toBe(5);
+      });
+
+      test('Box 1 fretStart === 5', () => {
+        const box = positions.find(p => p.label === 'Box 1')!;
+        expect(box.fretStart).toBe(5);
+      });
+
+      test('Box 2 fretStart === 7 (G-string D at fret 7 is in the window)', () => {
+        // anchor=8, windowStart=7; G string fret 7 = D (interval 5) is a scale tone
+        const box = positions.find(p => p.label === 'Box 2')!;
+        expect(box.fretStart).toBe(7);
+      });
+
+      test('Box 3 fretEnd >= 13 (B-string C at fret 13 is in the window)', () => {
+        // anchor=10, A_next=12, windowEnd=13; B string fret 13 = C (interval 3) is a scale tone
+        const box = positions.find(p => p.label === 'Box 3')!;
+        expect(box.fretEnd).toBeGreaterThanOrEqual(13);
+      });
+
+      test('Box 4 fretStart === 12', () => {
+        const box = positions.find(p => p.label === 'Box 4')!;
+        expect(box.fretStart).toBe(12);
+      });
+
+      test('Box 5 fretStart <= 4 and includes at least one open string note', () => {
+        // anchor=3, open string rule fires; open E/G/D/A strings are in Am pentatonic
+        const box = positions.find(p => p.label === 'Box 5')!;
+        expect(box.fretStart).toBeLessThanOrEqual(4);
+        const openNote = box.notes.find(n => n.fret === 0);
+        expect(openNote).toBeDefined();
+      });
+    });
+
+    describe('C major (root 0, intervals [0,2,4,5,7,9,11])', () => {
+      // C major low-E anchors (7-note): [7(B), 8(C=root), 10(D), 12(E), 13(F), 15(G), 17(A)]
+      // Box 7 below root at 7, Box 1 at 8, Boxes 2-6 at 10,12,13,15,17
+      let positions: ScalePosition[];
+      beforeEach(() => { positions = computeScalePositions(0, [0, 2, 4, 5, 7, 9, 11]); });
+
+      test('returns exactly 7 positions', () => {
+        expect(positions.length).toBe(7);
+      });
+
+      test('Box 1 fretStart === 7 (anchor=8, windowStart=7; low E fret 7 = B is a scale tone)', () => {
+        const box = positions.find(p => p.label === 'Box 1')!;
+        expect(box.fretStart).toBe(7);
+      });
+    });
+  });
+
+  describe('regression', () => {
+    test('Am pentatonic: no Box 5 with fretStart >= 14 (old wrap bug gone)', () => {
+      const positions = computeScalePositions(9, [0, 3, 5, 7, 10]);
+      const box5 = positions.find(p => p.label === 'Box 5');
+      expect(box5).toBeDefined();
+      expect(box5!.fretStart).toBeLessThan(14);
+    });
+
+    test('no 7-note scale returns exactly 5 boxes for any root', () => {
+      const sevenNoteScales = Object.entries(SCALE_TYPES).filter(([, iv]) => iv.length === 7);
+      for (const [, intervals] of sevenNoteScales) {
+        for (let root = 0; root < 12; root++) {
+          const positions = computeScalePositions(root, intervals);
+          expect(positions.length).toBe(7);
+        }
+      }
+    });
+  });
+
 });
