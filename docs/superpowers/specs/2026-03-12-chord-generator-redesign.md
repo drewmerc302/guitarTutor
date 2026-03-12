@@ -23,9 +23,10 @@ Replace the hardcoded CAGED system with a constraint-based algorithmic generator
 
 A single `generateVoicings(root, intervals)` function replaces all existing generators. It works by enumerated search with constraint filtering:
 
-1. **Compute required pitch classes.** From root and interval array, derive the set of pitch classes. For chords with 4+ tones, the 5th is optional.
+1. **Compute required pitch classes.** From root and interval array, derive the set of pitch classes. For chords with 4+ tones, the perfect 5th (interval[2] === 7 semitones) is optional. Diminished and augmented 5ths are NOT optional — they are defining tones for those chord types.
    - Example: C Major (root=0, intervals=[0,4,7]) -> required: {0, 4, 7}
    - Example: C9 (root=0, intervals=[0,4,7,10,14]) -> required: {0, 4, 10, 2}, optional: {7}
+   - Example: Cdim7 (root=0, intervals=[0,3,6,9]) -> required: {0, 3, 6, 9} (b5 is NOT optional)
 
 2. **Enumerate fret windows.** Slide a 4-fret window across the neck: [1-4], [2-5], ..., [21-24]. Within each window, open strings (fret 0) are always available as candidates — they are "free" and do not count toward the 4-fret span. There is no separate open-string variant; every window naturally includes fret 0 as an option for any string whose open pitch class is in the chord's set.
 
