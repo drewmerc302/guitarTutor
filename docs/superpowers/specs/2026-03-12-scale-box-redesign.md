@@ -47,7 +47,7 @@ Label the selected anchors:
 
 When there is no below-root anchor (i.e. `idx_root = 0`, so `max(0, idx_root - 1) = 0`), all N anchors start at the root and ascend: Box 1, Box 2 … Box N. There is no gap in numbering.
 
-Any anchor whose computed box window falls entirely off the fretboard is skipped. The function may return fewer than N boxes for roots near fret 0 or fret 24.
+**If there are fewer than N anchors from the starting index to the end of the low-E anchor list**, take as many as are available (truncate rather than wrap). Any anchor whose computed box window falls entirely off the fretboard is then skipped. In practice, for all 12 roots with TOTAL_FRETS = 24, the full anchor list has enough entries that this truncation does not occur — the property-based tests may assert exactly `intervals.length` positions for all 84 root × scale-type combinations.
 
 **Example — Am pentatonic (root A = 9):**
 
@@ -106,13 +106,14 @@ Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 
 - Rewrite the main loop in `computeScalePositions` to use computed anchors and dynamic windows
 
 **`src/screens/ScalesScreen.tsx`:**
-- Remove the hardcoded `const NUM_BOXES = 5`
+- Remove the hardcoded `const NUM_BOXES = 5` and the static `'Pos 1'…'Pos 5'` chip labels (visible text changes from `"Pos N"` to `"Box N"` — intentional)
 - Remove `positionOptions` memo; derive chip options inline from `positions` (dependent on `positions`, not a static empty-dep array — the count changes between scale types)
 - Change `activePositions` Set to store box labels (`'Box 1'`, `'Box 2'`…) instead of numeric index strings
 - Replace all three `parseInt(key)` / `` `Box ${boxNum + 1}` `` usages with direct label lookups (`p.label === key`):
   1. `activeNoteSet` memo
   2. `boxHighlights` memo
   3. Inline `FretboardViewer` `notes` prop (currently `positions.filter(p => p.label === \`Box ${parseInt(key) + 1}\`).flatMap(...)`)
+- Reset `activePositions` to `new Set(['all'])` whenever `type` changes (add a `useEffect` on `type` that calls `setActivePositions(new Set(['all']))`). This prevents stale labels (e.g. `'Box 6'` selected for Blues, then switching to Major Pent. which has 5 boxes) from producing an empty fretboard.
 - Rewrite `positionOptions`, `activeChipOptions`, and `handlePositionChipToggle` so chip labels match box labels exactly:
   - `positionOptions = ['All', ...positions.map(p => p.label)]` (depends on `positions`)
   - `activeChipOptions`: when `activePositions.has('all')` return `new Set(['All'])`; otherwise return the `activePositions` Set directly (keys are already display labels)
@@ -141,7 +142,7 @@ The following existing tests assert the old (incorrect) behaviour and must be de
 
 Run across all 12 roots × 7 scale types (84 combinations):
 
-- **Correct box count:** returns exactly `intervals.length` positions (or fewer when boxes fall off the fretboard at extreme frets)
+- **Correct box count:** returns exactly `intervals.length` positions (for all 12 roots with TOTAL_FRETS = 24 this should always be exactly N — the truncation path is not expected to fire)
 - **Box 1 exists and contains root on low E:** the position with `label === 'Box 1'` has at least one note with `isRoot === true` on string s:5
 - **Ascending order:** positions are sorted by `fretStart` ascending
 - **Scale tones only:** every note in every box has `interval` in the scale's interval set
