@@ -6,7 +6,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { FretboardViewer, RootPicker, ChordDiagram } from '../components';
 import { ChipPicker } from '../components/ChipPicker';
 import { SegmentedControl } from '../components/SegmentedControl';
-import { CHORD_TYPES, getChordVoicings, buildVoicingRegions, ChordVoicing } from '../engine/chords';
+import { CHORD_TYPES, getChordVoicings, buildVoicingRegions, ChordVoicing, InversionFilter } from '../engine/chords';
 import { getNotesOnFretboard } from '../engine/fretboard';
 import { assignFingers } from '../engine/fingers';
 import { NATURAL_NAMES, ROOT_TO_NATURAL_POS } from '../components/RootPicker';
@@ -40,6 +40,7 @@ export function ChordsScreen() {
   const [root, setRoot] = usePersistentState<number>('chords.root', 0);
   const [type, setType] = usePersistentState<string>('chords.type', 'Major');
   const [display, setDisplay] = usePersistentState<string>('chords.display', 'interval');
+  const [inversion, setInversion] = usePersistentState<string>('chords.inversion', 'All');
   const [activeVoicingIndex, setActiveVoicingIndex] = useState(0);
   const [activeRootName, setActiveRootName] = useState(
     () => NATURAL_NAMES[ROOT_TO_NATURAL_POS[root]] ?? 'C'
@@ -48,7 +49,7 @@ export function ChordsScreen() {
   const intervals = CHORD_TYPES[type];
   const allNotes = useMemo(() => getNotesOnFretboard(root, intervals), [root, intervals]);
 
-  const voicings = useMemo(() => getChordVoicings(root, type), [root, type]);
+  const voicings = useMemo(() => getChordVoicings(root, type, inversion.toLowerCase() as InversionFilter), [root, type, inversion]);
   const voicingRegions = useMemo(() => buildVoicingRegions(voicings, root), [voicings, root]);
 
   // Default to voicing closest to nut
@@ -89,14 +90,38 @@ export function ChordsScreen() {
 
   const handleRootChange = (newRoot: number) => {
     setRoot(newRoot);
-    const newVoicings = getChordVoicings(newRoot, type);
-    setActiveVoicingIndex(findClosestToNutIndex(newVoicings));
+    const currentInversion = inversion.toLowerCase() as InversionFilter;
+    const filteredVoicings = getChordVoicings(newRoot, type, currentInversion);
+    if (filteredVoicings.length === 0) {
+      setInversion('All');
+      const allVoicings = getChordVoicings(newRoot, type, 'all');
+      setActiveVoicingIndex(findClosestToNutIndex(allVoicings));
+    } else {
+      setActiveVoicingIndex(findClosestToNutIndex(filteredVoicings));
+    }
   };
 
   const handleTypeChange = (newType: string) => {
     setType(newType);
-    const newVoicings = getChordVoicings(root, newType);
-    setActiveVoicingIndex(findClosestToNutIndex(newVoicings));
+    const currentInversion = inversion.toLowerCase() as InversionFilter;
+    const filteredVoicings = getChordVoicings(root, newType, currentInversion);
+    if (filteredVoicings.length === 0) {
+      setInversion('All');
+      const allVoicings = getChordVoicings(root, newType, 'all');
+      setActiveVoicingIndex(findClosestToNutIndex(allVoicings));
+    } else {
+      setActiveVoicingIndex(findClosestToNutIndex(filteredVoicings));
+    }
+  };
+
+  const handleInversionChange = (newInversion: string) => {
+    const filterValue = newInversion.toLowerCase() as InversionFilter;
+    const filteredVoicings = getChordVoicings(root, type, filterValue);
+    if (filteredVoicings.length === 0) {
+      setInversion('All');
+    } else {
+      setInversion(newInversion);
+    }
   };
 
   const handleNotePress = (string: number, fret: number, isRoot: boolean) => {
@@ -143,6 +168,9 @@ export function ChordsScreen() {
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Display</Text>
         <SegmentedControl options={['Finger', 'Interval', 'Note']} activeOption={display} onSelect={setDisplay} />
+
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Inversion</Text>
+        <SegmentedControl options={['All', 'Root', '1st', '2nd']} activeOption={inversion} onSelect={handleInversionChange} />
 
         <Text style={[styles.voicingHint, { color: theme.textMuted }]}>
           Tap a root to change voicings
