@@ -22,270 +22,224 @@ export const CHORD_TYPES: Record<string, number[]> = {
   'Dim7': [0,3,6,9], 'Min7b5': [0,3,6,10], '9th': [0,4,7,10,14],
 };
 
-export function generateBarreVoicings(root: number): ChordVoicing[] {
-  const eShapeFret = (root - 4 + 12) % 12;
-  const eShape: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:0},{s:2,f:1},{s:3,f:2},{s:4,f:2},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret},{s:2,f:eShapeFret+1},{s:3,f:eShapeFret+2},{s:4,f:eShapeFret+2},{s:5,f:eShapeFret}];
+export type InversionFilter = 'all' | 'root' | '1st' | '2nd';
 
-  const aShapeFret = (root - 9 + 12) % 12;
-  const aShape: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:2},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:aShapeFret},{s:1,f:aShapeFret+2},{s:2,f:aShapeFret+2},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
+// --- Memoization cache ---
+const voicingCache = new Map<string, ChordVoicing[]>();
 
-  const cShapeFret = (root - 0 + 12) % 12;
-  const cOffset = cShapeFret === 0 ? 0 : cShapeFret;
-  const cShape: ChordVoicing = [{s:0,f:cOffset},{s:1,f:cOffset+1},{s:2,f:cOffset},{s:3,f:cOffset+2},{s:4,f:cOffset+3},{s:5,f:-1}];
-
-  const dShapeFret = (root - 2 + 12) % 12;
-  const dShape: ChordVoicing = dShapeFret === 0
-    ? [{s:0,f:2},{s:1,f:3},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]
-    : [{s:0,f:dShapeFret+2},{s:1,f:dShapeFret+3},{s:2,f:dShapeFret+2},{s:3,f:dShapeFret},{s:4,f:-1},{s:5,f:-1}];
-
-  const gShapeFret = (root - 7 + 12) % 12;
-  const gShape: ChordVoicing = gShapeFret === 0
-    ? [{s:0,f:3},{s:1,f:0},{s:2,f:0},{s:3,f:0},{s:4,f:2},{s:5,f:3}]
-    : [{s:0,f:gShapeFret+3},{s:1,f:gShapeFret},{s:2,f:gShapeFret},{s:3,f:gShapeFret},{s:4,f:gShapeFret+2},{s:5,f:gShapeFret+3}];
-
-  return [eShape, aShape, cShape, dShape, gShape].filter(shape =>
-    shape.every(v => v.f < 0 || (v.f >= 0 && v.f <= TOTAL_FRETS))
-  );
+/**
+ * Compute required and optional pitch classes for a chord.
+ * For chords with 4+ tones, the perfect 5th (interval index 2) is optional.
+ * Diminished/augmented 5ths are NOT optional — they are defining tones.
+ */
+function computePitchClasses(root: number, intervals: number[]): {
+  required: Set<number>;
+  all: Set<number>;
+} {
+  const allPCs = new Set(intervals.map(i => (root + i) % 12));
+  if (intervals.length >= 4 && intervals[2] === 7) {
+    const fifthPC = (root + 7) % 12;
+    const required = new Set(allPCs);
+    required.delete(fifthPC);
+    return { required, all: allPCs };
+  }
+  return { required: allPCs, all: allPCs };
 }
 
-export function generateMinorBarreVoicings(root: number): ChordVoicing[] {
-  const eShapeFret = (root - 4 + 12) % 12;
-  const eShape: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:0},{s:2,f:0},{s:3,f:2},{s:4,f:2},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret},{s:2,f:eShapeFret},{s:3,f:eShapeFret+2},{s:4,f:eShapeFret+2},{s:5,f:eShapeFret}];
-
-  const aShapeFret = (root - 9 + 12) % 12;
-  const aShape: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:1},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:aShapeFret},{s:1,f:aShapeFret+1},{s:2,f:aShapeFret+2},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
-
-  const dShapeFret = (root - 2 + 12) % 12;
-  const dShape: ChordVoicing = dShapeFret === 0
-    ? [{s:0,f:1},{s:1,f:3},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]
-    : [{s:0,f:dShapeFret+1},{s:1,f:dShapeFret+3},{s:2,f:dShapeFret+2},{s:3,f:dShapeFret},{s:4,f:-1},{s:5,f:-1}];
-
-  return [eShape, aShape, dShape].filter(shape =>
-    shape.every(v => v.f < 0 || (v.f >= 0 && v.f <= TOTAL_FRETS))
-  );
+/**
+ * For each string, compute the valid fret assignments within a given window.
+ * Returns an array of 6 arrays, one per string, each containing valid fret values.
+ * Open strings (fret 0) are always candidates if their pitch class is in the chord.
+ */
+function validAssignmentsPerString(
+  chordPCs: Set<number>,
+  windowStart: number,
+  windowEnd: number,
+): number[][] {
+  const result: number[][] = [];
+  for (let s = 0; s < 6; s++) {
+    const options: number[] = [-1]; // mute is always an option
+    // Open string
+    if (chordPCs.has(STANDARD_TUNING[s] % 12)) {
+      options.push(0);
+    }
+    // Fretted within window
+    for (let f = windowStart; f <= windowEnd; f++) {
+      if (f > TOTAL_FRETS) break;
+      const pc = (STANDARD_TUNING[s] + f) % 12;
+      if (chordPCs.has(pc)) {
+        options.push(f);
+      }
+    }
+    result.push(options);
+  }
+  return result;
 }
 
-// --- Open/common voicings for Sus4 and Sus2 ---
-
-function generateSus4Voicings(root: number): ChordVoicing[] {
-  // Common open and barre voicings for sus4 chords.
-  // Root=D (2): x-x-0-2-3-3 (open Dsus4), root=A (9): x-0-2-2-3-x (open Asus4), etc.
-  const voicings: ChordVoicing[] = [];
-
-  // Open position Dsus4 (root=D=2): x-x-0-2-3-3
-  if (root === 2) {
-    voicings.push([{s:0,f:3},{s:1,f:3},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]);
+/**
+ * Count interior muted strings (gaps between played strings).
+ */
+function countInteriorMutes(voicing: ChordVoicing): number {
+  let lo = 6, hi = -1;
+  for (const v of voicing) {
+    if (v.f >= 0) {
+      if (v.s < lo) lo = v.s;
+      if (v.s > hi) hi = v.s;
+    }
   }
-  // Open position Asus4 (root=A=9): x-0-2-2-3-x
-  if (root === 9) {
-    voicings.push([{s:0,f:-1},{s:1,f:3},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]);
+  if (lo >= hi) return 0;
+  let gaps = 0;
+  for (const v of voicing) {
+    if (v.f === -1 && v.s > lo && v.s < hi) {
+      gaps++;
+    }
   }
-  // Open position Esus4 (root=E=4): 0-0-2-2-0-0
-  if (root === 4) {
-    voicings.push([{s:0,f:0},{s:1,f:0},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:0}]);
-  }
-  // Open position Gsus4 (root=G=7): 3-1-0-0-3-3
-  if (root === 7) {
-    voicings.push([{s:0,f:3},{s:1,f:3},{s:2,f:0},{s:3,f:0},{s:4,f:1},{s:5,f:3}]);
-  }
-  // Open position Csus4 (root=C=0): x-3-3-0-1-x (Csus4)
-  if (root === 0) {
-    voicings.push([{s:0,f:-1},{s:1,f:1},{s:2,f:0},{s:3,f:3},{s:4,f:3},{s:5,f:-1}]);
-  }
-
-  // Barre voicings: E-shape sus4 and A-shape sus4
-  // E-shape sus4: barre at eShapeFret, add sus4 (+5 from root relative to E shape)
-  const eShapeFret = (root - 4 + 12) % 12;
-  const eSus4: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:0},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret},{s:2,f:eShapeFret+2},{s:3,f:eShapeFret+2},{s:4,f:eShapeFret},{s:5,f:eShapeFret}];
-  voicings.push(eSus4);
-
-  // A-shape sus4: barre at aShapeFret
-  const aShapeFret = (root - 9 + 12) % 12;
-  const aSus4: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:-1},{s:1,f:3},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:-1},{s:1,f:aShapeFret+3},{s:2,f:aShapeFret+2},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
-  voicings.push(aSus4);
-
-  return voicings.filter(v => v.every(n => n.f < 0 || (n.f >= 0 && n.f <= TOTAL_FRETS)));
+  return gaps;
 }
 
-function generateSus2Voicings(root: number): ChordVoicing[] {
-  const voicings: ChordVoicing[] = [];
+/**
+ * Score a voicing for playability (lower = better).
+ */
+function scorePlayability(voicing: ChordVoicing): number {
+  let score = 0;
+  const fretted = voicing.filter(v => v.f > 0).map(v => v.f);
+  const played = voicing.filter(v => v.f >= 0).length;
+  const muted = voicing.filter(v => v.f === -1).length;
 
-  // Open position Dsus2 (root=D=2): x-x-0-2-3-0
-  if (root === 2) {
-    voicings.push([{s:0,f:0},{s:1,f:3},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]);
+  score += muted; // +1 per muted string
+  if (fretted.length > 0) {
+    score += Math.max(...fretted) - Math.min(...fretted); // +1 per fret of stretch
   }
-  // Open Asus2 (root=A=9): x-0-2-2-0-x
-  if (root === 9) {
-    voicings.push([{s:0,f:-1},{s:1,f:0},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]);
-  }
-  // Open Esus2 (root=E=4): 0-0-4-4-0-0
-  if (root === 4) {
-    voicings.push([{s:0,f:0},{s:1,f:0},{s:2,f:4},{s:3,f:4},{s:4,f:0},{s:5,f:0}]);
-  }
+  score += countInteriorMutes(voicing) * 2; // +2 per interior gap
+  score -= Math.min(3, Math.max(0, played - 3)); // -1 per extra string beyond 3, capped at -3
 
-  // E-shape sus2 barre voicings
-  const eShapeFret = (root - 4 + 12) % 12;
-  const eSus2: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:0},{s:2,f:4},{s:3,f:4},{s:4,f:0},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret},{s:2,f:eShapeFret+4},{s:3,f:eShapeFret+4},{s:4,f:eShapeFret},{s:5,f:eShapeFret}];
-  voicings.push(eSus2);
-
-  // A-shape sus2
-  const aShapeFret = (root - 9 + 12) % 12;
-  const aSus2: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:-1},{s:1,f:2},{s:2,f:2},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:-1},{s:1,f:aShapeFret+2},{s:2,f:aShapeFret+2},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
-  voicings.push(aSus2);
-
-  return voicings.filter(v => v.every(n => n.f < 0 || (n.f >= 0 && n.f <= TOTAL_FRETS)));
+  return score;
 }
 
-function generateDominant7Voicings(root: number): ChordVoicing[] {
-  const voicings: ChordVoicing[] = [];
+/**
+ * Classify voicing inversion based on bass note relative to interval array.
+ * Inversions are always relative to the requested root.
+ */
+function classifyInversion(
+  voicing: ChordVoicing,
+  root: number,
+  intervals: number[],
+): 'root' | '1st' | '2nd' | 'other' {
+  // Find bass note: lowest-pitched non-muted string (highest string index = low E)
+  let bassPC: number | null = null;
+  for (let s = 5; s >= 0; s--) {
+    const note = voicing.find(v => v.s === s);
+    if (note && note.f >= 0) {
+      bassPC = (STANDARD_TUNING[s] + note.f) % 12;
+      break;
+    }
+  }
+  if (bassPC === null) return 'other';
 
-  // Common open 7th chord voicings
-  // E7 (root=4): 0-0-1-0-2-0
-  if (root === 4) {
-    voicings.push([{s:0,f:0},{s:1,f:2},{s:2,f:0},{s:3,f:1},{s:4,f:0},{s:5,f:0}]);
-  }
-  // A7 (root=9): x-0-2-0-2-0
-  if (root === 9) {
-    voicings.push([{s:0,f:0},{s:1,f:2},{s:2,f:0},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]);
-  }
-  // D7 (root=2): x-x-0-2-1-2
-  if (root === 2) {
-    voicings.push([{s:0,f:2},{s:1,f:1},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]);
-  }
-  // G7 (root=7): 1-0-0-0-2-3
-  if (root === 7) {
-    voicings.push([{s:0,f:1},{s:1,f:3},{s:2,f:0},{s:3,f:0},{s:4,f:0},{s:5,f:3}]);
-  }
-  // C7 (root=0): x-3-2-3-1-x
-  if (root === 0) {
-    voicings.push([{s:0,f:-1},{s:1,f:1},{s:2,f:3},{s:3,f:2},{s:4,f:3},{s:5,f:-1}]);
-  }
-  // B7 (root=11): x-2-1-2-0-2
-  if (root === 11) {
-    voicings.push([{s:0,f:2},{s:1,f:0},{s:2,f:2},{s:3,f:1},{s:4,f:2},{s:5,f:-1}]);
-  }
+  const rootPC = (root + intervals[0]) % 12;
+  const firstPC = intervals.length > 1 ? (root + intervals[1]) % 12 : -1;
+  const secondPC = intervals.length > 2 ? (root + intervals[2]) % 12 : -1;
 
-  // E-shape 7th barre voicing
-  const eShapeFret = (root - 4 + 12) % 12;
-  const e7: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:2},{s:2,f:0},{s:3,f:1},{s:4,f:0},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret+2},{s:2,f:eShapeFret},{s:3,f:eShapeFret+1},{s:4,f:eShapeFret},{s:5,f:eShapeFret}];
-  voicings.push(e7);
-
-  // A-shape 7th barre voicing
-  const aShapeFret = (root - 9 + 12) % 12;
-  const a7: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:2},{s:2,f:0},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:aShapeFret},{s:1,f:aShapeFret+2},{s:2,f:aShapeFret},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
-  voicings.push(a7);
-
-  return voicings.filter(v => v.every(n => n.f < 0 || (n.f >= 0 && n.f <= TOTAL_FRETS)));
+  if (bassPC === rootPC) return 'root';
+  if (bassPC === firstPC) return '1st';
+  if (bassPC === secondPC) return '2nd';
+  return 'other';
 }
 
-function generateMaj7Voicings(root: number): ChordVoicing[] {
-  const voicings: ChordVoicing[] = [];
+/**
+ * Core constraint-based voicing generator.
+ * Enumerates all valid voicings across 24 frets for a given root + intervals.
+ */
+function generateVoicings(root: number, intervals: number[]): ChordVoicing[] {
+  const { required, all: chordPCs } = computePitchClasses(root, intervals);
+  const seen = new Set<string>();
+  const results: Array<{ voicing: ChordVoicing; score: number }> = [];
 
-  // Open Emaj7 (root=4): 0-0-1-1-0-0
-  if (root === 4) {
-    voicings.push([{s:0,f:0},{s:1,f:0},{s:2,f:1},{s:3,f:1},{s:4,f:0},{s:5,f:0}]);
-  }
-  // Open Amaj7 (root=9): x-0-2-1-2-0
-  if (root === 9) {
-    voicings.push([{s:0,f:0},{s:1,f:2},{s:2,f:1},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]);
-  }
-  // Open Dmaj7 (root=2): x-x-0-2-2-2
-  if (root === 2) {
-    voicings.push([{s:0,f:2},{s:1,f:2},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]);
-  }
-  // Open Gmaj7 (root=7): 2-0-0-0-2-3
-  if (root === 7) {
-    voicings.push([{s:0,f:2},{s:1,f:3},{s:2,f:0},{s:3,f:0},{s:4,f:0},{s:5,f:3}]);
-  }
-  // Open Cmaj7 (root=0): x-3-2-0-0-x
-  if (root === 0) {
-    voicings.push([{s:0,f:-1},{s:1,f:0},{s:2,f:0},{s:3,f:2},{s:4,f:3},{s:5,f:-1}]);
-  }
-  // Open Fmaj7 (root=5): x-x-3-2-1-0
-  if (root === 5) {
-    voicings.push([{s:0,f:0},{s:1,f:1},{s:2,f:2},{s:3,f:3},{s:4,f:-1},{s:5,f:-1}]);
+  for (let windowStart = 1; windowStart <= TOTAL_FRETS - 3; windowStart++) {
+    const windowEnd = windowStart + 3;
+    const options = validAssignmentsPerString(chordPCs, windowStart, windowEnd);
+
+    const counts = options.map(o => o.length);
+    let total = 1;
+    for (const c of counts) total *= c;
+
+    for (let combo = 0; combo < total; combo++) {
+      const voicing: ChordVoicing = [];
+      let idx = combo;
+      for (let s = 0; s < 6; s++) {
+        const choice = idx % counts[s];
+        idx = Math.floor(idx / counts[s]);
+        voicing.push({ s, f: options[s][choice] });
+      }
+
+      // Quick reject: must have at least one non-muted string
+      if (voicing.every(v => v.f === -1)) continue;
+
+      // Check fretted span <= 4
+      const fretted = voicing.filter(v => v.f > 0).map(v => v.f);
+      if (fretted.length > 0) {
+        const span = Math.max(...fretted) - Math.min(...fretted);
+        if (span > 4) continue;
+      }
+
+      // Check all required pitch classes present
+      const pcs = new Set<number>();
+      for (const v of voicing) {
+        if (v.f >= 0) {
+          pcs.add((STANDARD_TUNING[v.s] + v.f) % 12);
+        }
+      }
+      let hasAll = true;
+      for (const pc of required) {
+        if (!pcs.has(pc)) { hasAll = false; break; }
+      }
+      if (!hasAll) continue;
+
+      // Dedup by string-to-fret mapping
+      const key = voicing
+        .slice()
+        .sort((a, b) => a.s - b.s)
+        .map(v => `${v.s}:${v.f}`)
+        .join(',');
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      results.push({ voicing, score: scorePlayability(voicing) });
+    }
   }
 
-  // E-shape maj7 barre
-  const eShapeFret = (root - 4 + 12) % 12;
-  const emaj7: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:0},{s:2,f:1},{s:3,f:1},{s:4,f:0},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret},{s:2,f:eShapeFret+1},{s:3,f:eShapeFret+1},{s:4,f:eShapeFret},{s:5,f:eShapeFret}];
-  voicings.push(emaj7);
-
-  // A-shape maj7 barre
-  const aShapeFret = (root - 9 + 12) % 12;
-  const amaj7: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:2},{s:2,f:1},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:aShapeFret},{s:1,f:aShapeFret+2},{s:2,f:aShapeFret+1},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
-  voicings.push(amaj7);
-
-  return voicings.filter(v => v.every(n => n.f < 0 || (n.f >= 0 && n.f <= TOTAL_FRETS)));
+  // Sort by playability score (lower = better), take top 50
+  results.sort((a, b) => a.score - b.score);
+  return results.slice(0, 50).map(r => r.voicing);
 }
 
-function generateMin7Voicings(root: number): ChordVoicing[] {
-  const voicings: ChordVoicing[] = [];
-
-  // Open Em7 (root=4): 0-0-0-0-2-0
-  if (root === 4) {
-    voicings.push([{s:0,f:0},{s:1,f:0},{s:2,f:0},{s:3,f:0},{s:4,f:2},{s:5,f:0}]);
+/**
+ * Get chord voicings for a root + type, with optional inversion filter.
+ * Results are memoized per (root, type) pair.
+ * Inversion classification uses interval-array position:
+ *   interval[0]=root position, interval[1]=1st inversion, interval[2]=2nd inversion
+ *   Any other bass note (e.g. 7th) is classified as 'other' and only visible under 'all'.
+ */
+export function getChordVoicings(
+  root: number,
+  type: string,
+  inversion: InversionFilter = 'all',
+): ChordVoicing[] {
+  const cacheKey = `${root}|${type}`;
+  let voicings = voicingCache.get(cacheKey);
+  if (!voicings) {
+    const intervals = CHORD_TYPES[type];
+    if (!intervals) return [];
+    voicings = generateVoicings(root, intervals);
+    voicingCache.set(cacheKey, voicings);
   }
-  // Open Am7 (root=9): x-0-2-0-1-0
-  if (root === 9) {
-    voicings.push([{s:0,f:0},{s:1,f:1},{s:2,f:0},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]);
-  }
-  // Open Dm7 (root=2): x-x-0-2-1-1
-  if (root === 2) {
-    voicings.push([{s:0,f:1},{s:1,f:1},{s:2,f:2},{s:3,f:0},{s:4,f:-1},{s:5,f:-1}]);
-  }
 
-  // E-shape min7 barre
-  const eShapeFret = (root - 4 + 12) % 12;
-  const em7: ChordVoicing = eShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:0},{s:2,f:0},{s:3,f:0},{s:4,f:2},{s:5,f:0}]
-    : [{s:0,f:eShapeFret},{s:1,f:eShapeFret},{s:2,f:eShapeFret},{s:3,f:eShapeFret},{s:4,f:eShapeFret+2},{s:5,f:eShapeFret}];
-  voicings.push(em7);
+  if (inversion === 'all') return voicings;
 
-  // A-shape min7 barre
-  const aShapeFret = (root - 9 + 12) % 12;
-  const am7: ChordVoicing = aShapeFret === 0
-    ? [{s:0,f:0},{s:1,f:1},{s:2,f:0},{s:3,f:2},{s:4,f:0},{s:5,f:-1}]
-    : [{s:0,f:aShapeFret},{s:1,f:aShapeFret+1},{s:2,f:aShapeFret},{s:3,f:aShapeFret+2},{s:4,f:aShapeFret},{s:5,f:-1}];
-  voicings.push(am7);
+  const intervals = CHORD_TYPES[type];
+  if (!intervals) return [];
 
-  return voicings.filter(v => v.every(n => n.f < 0 || (n.f >= 0 && n.f <= TOTAL_FRETS)));
-}
-
-export function getChordVoicings(root: number, type: string): ChordVoicing[] {
-  if (type === 'Major') return generateBarreVoicings(root);
-  if (type === 'Minor') return generateMinorBarreVoicings(root);
-  if (type === 'Sus4') return generateSus4Voicings(root);
-  if (type === 'Sus2') return generateSus2Voicings(root);
-  if (type === '7th') return generateDominant7Voicings(root);
-  if (type === 'Maj7') return generateMaj7Voicings(root);
-  if (type === 'Min7') return generateMin7Voicings(root);
-  // Fallback: return all major barre shapes as positional reference voicings
-  return generateBarreVoicings(root);
+  return voicings.filter(v => classifyInversion(v, root, intervals) === inversion);
 }
 
 function findBarreFret(voicing: ChordVoicing): number | null {
