@@ -42,8 +42,10 @@ Find `idx_root` = the index of the root anchor in the sorted low-E anchor list (
 
 Label the selected anchors:
 - The anchor at `idx_root` → **Box 1**
-- Anchors above Box 1 in ascending order → Box 2, Box 3 … (up to Box N)
+- Anchors above Box 1 in ascending order → Box 2, Box 3 … Box N (or Box N−1 when a below-root anchor is present)
 - The anchor below Box 1 (if present at position `idx_root - 1`) → Box N
+
+When there is no below-root anchor (i.e. `idx_root = 0`, so `max(0, idx_root - 1) = 0`), all N anchors start at the root and ascend: Box 1, Box 2 … Box N. There is no gap in numbering.
 
 Any anchor whose computed box window falls entirely off the fretboard is skipped. The function may return fewer than N boxes for roots near fret 0 or fret 24.
 
@@ -63,8 +65,10 @@ For each box with anchor `A[i]`, define:
 
 ```
 A_next  = the anchor immediately above A[i] in the selected N-anchor set
-          (for the highest anchor in the set, A_next = sorted_anchors[0] + 12,
-           where sorted_anchors[0] is the lowest anchor in the selected set)
+          (for the highest anchor in the set, A_next = selected[0] + 12,
+           where selected[0] is the lowest-fret anchor in the selected N-anchor set —
+           this may be the below-root Box N anchor when one exists, e.g. for Am pentatonic
+           selected = [3, 5, 8, 10, 12], so selected[0] = 3 and A_next = 15)
 
 windowStart = A[i] - 1
 windowEnd   = A_next + 1
@@ -98,14 +102,21 @@ Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 
 - Delete `NUM_BOXES` constant
 - Delete the octave-wrap block (`if (startFret > 12) startFret -= 12`)
 - Delete the fixed `endFret = startFret + 3` logic
-- Add `findAnchors(root, intervals)` — walks low E, returns the N selected anchor frets
+- Add `findAnchors(root, intervals): number[]` — walks low E, returns the N selected anchor frets in ascending order. This is an internal (non-exported) helper; it is not part of the public API.
 - Rewrite the main loop in `computeScalePositions` to use computed anchors and dynamic windows
 
 **`src/screens/ScalesScreen.tsx`:**
 - Remove the hardcoded `const NUM_BOXES = 5`
-- Derive position chips directly from `positions.map(p => p.label)` (e.g. `"Box 5"`, `"Box 1"`, `"Box 2"`) instead of generating `Pos 1`…`Pos 5` independently
-- Change `activePositions` Set to store box labels (`'Box 1'`, `'Box 2'`…) instead of index strings, simplifying the lookup — no more `parseInt` offset arithmetic
-- Update `activeNoteSet` and `boxHighlights` memos to match positions by `p.label === key` directly
+- Remove `positionOptions` memo; derive chip options inline from `positions` (dependent on `positions`, not a static empty-dep array — the count changes between scale types)
+- Change `activePositions` Set to store box labels (`'Box 1'`, `'Box 2'`…) instead of numeric index strings
+- Replace all three `parseInt(key)` / `` `Box ${boxNum + 1}` `` usages with direct label lookups (`p.label === key`):
+  1. `activeNoteSet` memo
+  2. `boxHighlights` memo
+  3. Inline `FretboardViewer` `notes` prop (currently `positions.filter(p => p.label === \`Box ${parseInt(key) + 1}\`).flatMap(...)`)
+- Rewrite `positionOptions`, `activeChipOptions`, and `handlePositionChipToggle` so chip labels match box labels exactly:
+  - `positionOptions = ['All', ...positions.map(p => p.label)]` (depends on `positions`)
+  - `activeChipOptions`: when `activePositions.has('all')` return `new Set(['All'])`; otherwise return the `activePositions` Set directly (keys are already display labels)
+  - `handlePositionChipToggle`: when opt === `'All'` call `handlePositionToggle('all')`; otherwise call `handlePositionToggle(opt)` directly (no index arithmetic needed)
 
 ### What Does NOT Change
 
@@ -146,7 +157,7 @@ Specific positions verified against standard guitar references:
 **Am pentatonic (root 9, intervals `[0,3,5,7,10]`):**
 - Returns exactly 5 positions
 - The position with `label === 'Box 1'` has `fretStart === 5`
-- The position with `label === 'Box 2'` has `fretStart` in the range 7–8
+- The position with `label === 'Box 2'` has `fretStart === 8` (anchor at fret 8; windowStart = 7, but fret 7 on all strings is B♭ — not a minor pentatonic tone — so the first included note is at fret 8)
 - The position with `label === 'Box 3'` has `fretEnd >= 13` (includes the B-string stretch note at fret 13)
 - The position with `label === 'Box 4'` has `fretStart === 12`
 - The position with `label === 'Box 5'` has `fretStart <= 4` (the below-root open-position box) and includes at least one note at `fret === 0` (open string)
@@ -163,5 +174,5 @@ Specific positions verified against standard guitar references:
 ## Known Limitations
 
 - **Adjacent boxes share notes.** The `[A-1, A_next+1]` window plus the open-string rule means notes in the overlap zone appear in two consecutive boxes. This matches standard guitar teaching (adjacent positions share boundary notes) and is intentional.
-- **Blues produces 6 positions.** `intervals.length = 6` for the Blues scale, so the algorithm returns 6 positions. Most beginner references fold the blue note (b5) into the surrounding pentatonic boxes rather than treating it as a separate position anchor. Displaying 6 positions is technically correct; whether the UI should cap Blues at 5 is a future UX decision.
+- **Blues produces 6 positions.** `intervals.length = 6` for the Blues scale, so the algorithm returns 6 positions and the position chip row shows 7 chips (All + Box 1…Box 6). Most beginner references fold the blue note (b5) into the surrounding pentatonic boxes rather than treating it as a separate position anchor. Displaying 6 positions is technically correct and the variable chip count is intentional; whether the UI should cap Blues at 5 is a future UX decision.
 - **Extreme roots near high frets.** For roots where boxes fall near fret 24, the dynamic window may clip some notes at `TOTAL_FRETS`. These edge cases are acceptable.
