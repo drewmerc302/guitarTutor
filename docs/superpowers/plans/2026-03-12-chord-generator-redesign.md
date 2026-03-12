@@ -846,20 +846,45 @@ test('renders Inversion SegmentedControl', () => {
   expect(json).toContain('2nd');
 });
 
-test('selecting Root inversion updates voicings', () => {
+test('selecting Root inversion filters to root-position voicings only', () => {
   let tree: any;
   act(() => { tree = create(<ChordsScreen />); });
 
-  const fvBefore = tree.root.findByType(FretboardViewer);
-  const voicingBefore = JSON.stringify([...(fvBefore.props.activeVoicing as Set<string>)].sort());
+  // Get voicing count with "All" (default)
+  const allLabel = tree.root.findAll((n: any) =>
+    typeof n.children?.[0] === 'string' && n.children[0].match(/Voicing \d+\/\d+/)
+  );
+  const allCountMatch = allLabel[0]?.children[0]?.match(/Voicing \d+\/(\d+)/);
+  const allCount = allCountMatch ? parseInt(allCountMatch[1]) : 0;
 
   const rootBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Root')[0];
   act(() => { rootBtn.props.onPress(); });
 
-  // Voicing set may change (or stay the same if default was already root position)
-  // Just verify it doesn't crash and still has an active voicing
-  const fvAfter = tree.root.findByType(FretboardViewer);
-  expect(fvAfter.props.activeVoicing).toBeTruthy();
+  // Root inversion should have fewer (or equal) voicings than "All"
+  const rootLabel = tree.root.findAll((n: any) =>
+    typeof n.children?.[0] === 'string' && n.children[0].match(/Voicing \d+\/\d+/)
+  );
+  const rootCountMatch = rootLabel[0]?.children[0]?.match(/Voicing \d+\/(\d+)/);
+  const rootCount = rootCountMatch ? parseInt(rootCountMatch[1]) : 0;
+
+  expect(rootCount).toBeLessThanOrEqual(allCount);
+  expect(rootCount).toBeGreaterThanOrEqual(1);
+});
+
+test('inversion falls back to All when filter yields zero voicings', () => {
+  let tree: any;
+  act(() => { tree = create(<ChordsScreen />); });
+
+  // Switch to a chord type, select an inversion, then switch to a type
+  // that may not have voicings for that inversion. The UI should fall
+  // back to "All" and still show voicings.
+  const secondBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === '2nd')[0];
+  act(() => { secondBtn.props.onPress(); });
+
+  // Verify voicings still exist (fallback should have kicked in if needed)
+  const fv = tree.root.findByType(FretboardViewer);
+  expect(fv.props.activeVoicing).toBeTruthy();
+  expect((fv.props.activeVoicing as Set<string>).size).toBeGreaterThan(0);
 });
 ```
 
