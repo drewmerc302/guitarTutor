@@ -162,7 +162,7 @@ Specific positions verified against standard guitar references:
 **Am pentatonic (root 9, intervals `[0,3,5,7,10]`):**
 - Returns exactly 5 positions
 - The position with `label === 'Box 1'` has `fretStart === 5`
-- The position with `label === 'Box 2'` has `fretStart === 8` (anchor at fret 8; windowStart = 7, but fret 7 on all strings is B♭ — not a minor pentatonic tone — so the first included note is at fret 8)
+- The position with `label === 'Box 2'` has `fretStart === 7` (anchor at fret 8; windowStart = 7; fret 7 on the G string gives D, interval 5 — a scale tone — so the window's `-1` overhang is included and fretStart = 7)
 - The position with `label === 'Box 3'` has `fretEnd >= 13` (includes the B-string stretch note at fret 13)
 - The position with `label === 'Box 4'` has `fretStart === 12`
 - The position with `label === 'Box 5'` has `fretStart <= 4` (the below-root open-position box) and includes at least one note at `fret === 0` (open string)
