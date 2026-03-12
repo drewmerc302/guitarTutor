@@ -159,6 +159,7 @@ Capture voicing count per (root, type) as a snapshot. Acts as a canary for unexp
 
 ## Known Limitations
 
+- **Pathological muting patterns:** Voicings with many interior muted strings (e.g., play string 6 and 1, mute 2-5) are technically valid but impractical. These are not hard-rejected; instead, the +2 per interior gap penalty in the playability score pushes them below the top-50 cutoff in practice.
 - **Physical playability beyond fret span:** The 4-fret span constraint is necessary but not sufficient for playability. Some generated voicings may require finger stretches or barre patterns that are difficult in practice. The `assignFingers()` heuristic approximates fingering but does not reject unplayable shapes. This is acceptable — the playability score ranks easier voicings higher, pushing awkward ones toward the bottom.
 - **Octave equivalence:** Voicings at fret N and fret N+12 produce the same pitch classes in different octaves. Both are included in results since a player may want high-register voicings. They are not deduplicated.
 - **Symmetric chords:** Dim7 and Aug chords have symmetric pitch class sets (Cdim7 = Ebdim7 = Gbdim7 = Adim7). The generator produces identical voicing sets for enharmonic roots but classifies inversions relative to the requested root.
