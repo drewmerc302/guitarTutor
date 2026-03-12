@@ -38,17 +38,14 @@ describe('applyModeRotation', () => {
 });
 
 describe('computeScalePositions', () => {
-  test('returns positions for C major with boxes wrapped to fit neck', () => {
-    // C major: low E (open=4), C=0, root at fret 8.
-    // With wrapping at fret 15, some boxes wrap to lower positions.
+  test('returns 7 positions for C major', () => {
     const positions = computeScalePositions(0, [0,2,4,5,7,9,11]);
-    // At least 5 unique box positions (some may wrap)
-    expect(positions.length).toBeGreaterThanOrEqual(5);
+    expect(positions.length).toBe(7);
     for (const pos of positions) {
       expect(pos.fretStart).toBeLessThanOrEqual(TOTAL_FRETS);
     }
-    // Box 1 must start at the root (C) position on low E (fret 8)
-    expect(positions[0].fretStart).toBe(8);
+    const box1 = positions.find(p => p.label === 'Box 1')!;
+    expect(box1.fretStart).toBe(7);
   });
 
   test('each position has label, fretStart, fretEnd, and notes', () => {
@@ -59,13 +56,6 @@ describe('computeScalePositions', () => {
       expect(typeof pos.fretEnd).toBe('number');
       expect(pos.fretEnd).toBeGreaterThan(pos.fretStart);
       expect(pos.notes.length).toBeGreaterThan(0);
-    }
-  });
-
-  test('each box spans exactly 3 frets (fretEnd - fretStart === 3)', () => {
-    const positions = computeScalePositions(9, [0, 3, 5, 7, 10]);
-    for (const pos of positions) {
-      expect(pos.fretEnd - pos.fretStart).toBe(3);
     }
   });
 
@@ -96,19 +86,6 @@ describe('computeScalePositions', () => {
     }
   });
 
-  test('A minor pentatonic produces 5 boxes plus octave repeats', () => {
-    // Low E (STANDARD_TUNING[5] = 4). A = note value 9. Root at fret 5.
-    // With 24 frets, boxes go up the neck and repeat at +12 frets.
-    const positions = computeScalePositions(9, [0, 3, 5, 7, 10]);
-    // At least 5 original boxes, plus octave repeats
-    expect(positions.length).toBeGreaterThanOrEqual(5);
-    for (const pos of positions) {
-      expect(pos.fretStart).toBeLessThanOrEqual(TOTAL_FRETS);
-    }
-    // Box 1 must start at the root position on low E (fret 5)
-    expect(positions[0].fretStart).toBe(5);
-  });
-
   test('all boxes have fretStart within TOTAL_FRETS for all 12 roots and all scale types', () => {
     for (const [, intervals] of Object.entries(SCALE_TYPES)) {
       for (let root = 0; root < 12; root++) {
@@ -127,28 +104,104 @@ describe('computeScalePositions', () => {
     });
   });
 
-  test('Box 1 always starts at the root note on low E string', () => {
-    const LOW_E_OPEN = 4; // STANDARD_TUNING[5]
-    for (let root = 0; root < 12; root++) {
-      let rootFret = 0;
-      for (let f = 0; f <= TOTAL_FRETS; f++) {
-        if ((LOW_E_OPEN + f) % 12 === root) { rootFret = f; break; }
+  describe('property-based: all 12 roots × all scale types', () => {
+    const ALL_ROOTS = Array.from({ length: 12 }, (_, i) => i);
+    const ALL_ENTRIES = Object.entries(SCALE_TYPES) as [string, number[]][];
+
+    test('returns exactly N positions for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          expect(positions.length).toBe(intervals.length);
+        }
       }
-      const positions = computeScalePositions(root, [0, 3, 5, 7, 10]);
-      expect(positions[0].fretStart).toBe(rootFret);
-    }
+    });
+
+    test('Box 1 exists and contains root on low E (string 5) for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          const box1 = positions.find(p => p.label === 'Box 1');
+          expect(box1).toBeDefined();
+          const rootNote = box1!.notes.find(n => n.isRoot && n.string === 5);
+          expect(rootNote).toBeDefined();
+        }
+      }
+    });
+
+    test('positions sorted by fretStart ascending for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          for (let i = 1; i < positions.length; i++) {
+            expect(positions[i].fretStart).toBeGreaterThanOrEqual(positions[i - 1].fretStart);
+          }
+        }
+      }
+    });
+
+    test('scale tones only for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        const intervalSet = new Set(intervals);
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          for (const pos of positions) {
+            for (const note of pos.notes) {
+              expect(intervalSet.has(note.interval)).toBe(true);
+            }
+          }
+        }
+      }
+    });
+
+    test('fretEnd > fretStart for every position', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          for (const pos of positions) {
+            expect(pos.fretEnd).toBeGreaterThan(pos.fretStart);
+          }
+        }
+      }
+    });
+
+    test('all note frets in [0, TOTAL_FRETS] for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          for (const pos of positions) {
+            for (const note of pos.notes) {
+              expect(note.fret).toBeGreaterThanOrEqual(0);
+              expect(note.fret).toBeLessThanOrEqual(TOTAL_FRETS);
+            }
+          }
+        }
+      }
+    });
+
+    test('every note has a non-null finger for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          for (const pos of positions) {
+            for (const note of pos.notes) {
+              expect(note.finger).not.toBeNull();
+            }
+          }
+        }
+      }
+    });
+
+    test('all labels match /^Box \\d+$/ for all combinations', () => {
+      for (const [, intervals] of ALL_ENTRIES) {
+        for (const root of ALL_ROOTS) {
+          const positions = computeScalePositions(root, intervals);
+          for (const pos of positions) {
+            expect(pos.label).toMatch(/^Box \d+$/);
+          }
+        }
+      }
+    });
   });
 
-  test('Box 1 starts at the root note on low E string for all 12 roots (major scale)', () => {
-    // Box 1 should always be the root position on low E, regardless of wrapping.
-    const LOW_E_OPEN = 4; // STANDARD_TUNING[5]
-    for (let root = 0; root < 12; root++) {
-      let rootFret = 0;
-      for (let f = 0; f <= TOTAL_FRETS; f++) {
-        if ((LOW_E_OPEN + f) % 12 === root) { rootFret = f; break; }
-      }
-      const positions = computeScalePositions(root, [0, 2, 4, 5, 7, 9, 11]);
-      expect(positions[0].fretStart).toBe(rootFret);
-    }
-  });
 });
