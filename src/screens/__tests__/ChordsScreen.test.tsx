@@ -228,4 +228,106 @@ describe('ChordsScreen', () => {
     const json = JSON.stringify(tree.toJSON());
     expect(json).toContain('C Minor');
   });
+
+  describe('Inversion filter', () => {
+    test('renders inversion label and all 4 options', () => {
+      let tree: any;
+      act(() => { tree = create(<ChordsScreen />); });
+      const json = JSON.stringify(tree.toJSON());
+      expect(json).toContain('Inversion');
+      expect(json).toContain('All');
+      expect(json).toContain('Root');
+      expect(json).toContain('1st');
+      expect(json).toContain('2nd');
+    });
+
+    test('default inversion is All', () => {
+      let tree: any;
+      act(() => { tree = create(<ChordsScreen />); });
+
+      const allBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'All')[0];
+      expect(allBtn.props.accessibilityState?.selected).toBe(true);
+
+      const rootBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Root')[0];
+      expect(rootBtn.props.accessibilityState?.selected).toBe(false);
+    });
+
+    test('selecting Root inversion filters voicings', () => {
+      let tree: any;
+      act(() => { tree = create(<ChordsScreen />); });
+
+      // Find the voicing label Text node (its children[0] is "Voicing ")
+      // children: ["Voicing ", activeVoicingIndex+1, "/", voicings.length]
+      const getVoicingTotal = () => {
+        const nodes = tree.root.findAll(
+          (n: any) => Array.isArray(n.props.children) && n.props.children[0] === 'Voicing '
+        );
+        if (nodes.length === 0) return -1;
+        return nodes[0].props.children[3] as number;
+      };
+
+      const totalAll = getVoicingTotal();
+      expect(totalAll).toBeGreaterThan(0);
+
+      const rootBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Root')[0];
+      act(() => { rootBtn.props.onPress(); });
+
+      // Root button should now be selected
+      const rootBtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Root')[0];
+      expect(rootBtnAfter.props.accessibilityState?.selected).toBe(true);
+
+      // Voicing count should be less than All
+      const totalRoot = getVoicingTotal();
+      expect(totalRoot).toBeLessThan(totalAll);
+    });
+
+    test('pressing Root then All restores all voicings', () => {
+      let tree: any;
+      act(() => { tree = create(<ChordsScreen />); });
+
+      const getVoicingTotal = () => {
+        const nodes = tree.root.findAll(
+          (n: any) => Array.isArray(n.props.children) && n.props.children[0] === 'Voicing '
+        );
+        if (nodes.length === 0) return -1;
+        return nodes[0].props.children[3] as number;
+      };
+
+      const totalInit = getVoicingTotal();
+
+      // Switch to Root
+      const rootBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Root')[0];
+      act(() => { rootBtn.props.onPress(); });
+
+      // Switch back to All
+      const allBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'All')[0];
+      act(() => { allBtn.props.onPress(); });
+
+      // All button should be selected
+      const allBtnAfter = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'All')[0];
+      expect(allBtnAfter.props.accessibilityState?.selected).toBe(true);
+
+      // Voicing count should be restored
+      const totalAfter = getVoicingTotal();
+      expect(totalAfter).toBe(totalInit);
+    });
+
+    test('inversion selection resets active voicing index to first voicing', () => {
+      let tree: any;
+      act(() => { tree = create(<ChordsScreen />); });
+
+      // Select Root inversion — voicing index should reset to 1/N
+      const rootBtn = tree.root.findAll((n: any) => n.props.accessibilityLabel === 'Root')[0];
+      act(() => { rootBtn.props.onPress(); });
+
+      // Find voicing label (children: ["Voicing ", index, "/", total])
+      const voicingNodes = tree.root.findAll(
+        (n: any) => Array.isArray(n.props.children) && n.props.children[0] === 'Voicing '
+      );
+      expect(voicingNodes.length).toBeGreaterThan(0);
+      const voicingIndex = voicingNodes[0].props.children[1] as number;
+      // Active voicing index should be reset to 1 (the default closest-to-nut voicing)
+      expect(voicingIndex).toBe(1);
+    });
+  });
 });
