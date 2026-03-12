@@ -224,3 +224,83 @@ describe('buildVoicingRegions (unchanged)', () => {
     }
   });
 });
+
+/**
+ * Helper: convert tab notation (low-E-first) to ChordVoicing.
+ * Notation: "x-3-2-0-1-0" where x=muted, numbers=frets.
+ * String order: index 0 = string 5 (low E), index 5 = string 0 (high E).
+ * This matches standard guitar tablature (low E string written leftmost).
+ */
+function tabToVoicing(tab: string): ChordVoicing {
+  const frets = tab.split('-').map(s => s === 'x' ? -1 : parseInt(s));
+  // tab is low-E-first: frets[0] = string 5, frets[5] = string 0
+  return frets.map((f, i) => ({ s: 5 - i, f }));
+}
+
+function voicingsContain(voicings: ChordVoicing[], target: ChordVoicing): boolean {
+  const targetKey = target
+    .slice()
+    .sort((a, b) => a.s - b.s)
+    .map(v => `${v.s}:${v.f}`)
+    .join(',');
+  return voicings.some(v => {
+    const key = v
+      .slice()
+      .sort((a, b) => a.s - b.s)
+      .map(n => `${n.s}:${n.f}`)
+      .join(',');
+    return key === targetKey;
+  });
+}
+
+describe('Golden set regression', () => {
+  const goldenSet: Array<{ name: string; root: number; type: string; tab: string }> = [
+    // Major open chords
+    { name: 'Open C Major',    root: 0,  type: 'Major', tab: 'x-3-2-0-1-0' },
+    { name: 'Open D Major',    root: 2,  type: 'Major', tab: 'x-x-0-2-3-2' },
+    { name: 'Open E Major',    root: 4,  type: 'Major', tab: '0-2-2-1-0-0' },
+    { name: 'Open G Major',    root: 7,  type: 'Major', tab: '3-2-0-0-0-3' },
+    { name: 'Open A Major',    root: 9,  type: 'Major', tab: 'x-0-2-2-2-0' },
+
+    // Major barre chords
+    { name: 'F barre (E-shape)',  root: 5,  type: 'Major', tab: '1-3-3-2-1-1' },
+    { name: 'Bb barre (A-shape)', root: 10, type: 'Major', tab: 'x-1-3-3-3-1' },
+
+    // Minor open chords
+    { name: 'Open Am',         root: 9,  type: 'Minor', tab: 'x-0-2-2-1-0' },
+    { name: 'Open Em',         root: 4,  type: 'Minor', tab: '0-2-2-0-0-0' },
+    { name: 'Open Dm',         root: 2,  type: 'Minor', tab: 'x-x-0-2-3-1' },
+
+    // 7th chords
+    { name: 'Open E7',         root: 4,  type: '7th',  tab: '0-2-0-1-0-0' },
+    { name: 'Open A7',         root: 9,  type: '7th',  tab: 'x-0-2-0-2-0' },
+    { name: 'Open D7',         root: 2,  type: '7th',  tab: 'x-x-0-2-1-2' },
+
+    // Maj7 chords
+    { name: 'Open Cmaj7',      root: 0,  type: 'Maj7', tab: 'x-3-2-0-0-0' },
+    { name: 'Open Emaj7',      root: 4,  type: 'Maj7', tab: '0-2-1-1-0-0' },
+
+    // Min7 chords
+    { name: 'Open Em7',        root: 4,  type: 'Min7', tab: '0-2-0-0-0-0' },
+    { name: 'Open Am7',        root: 9,  type: 'Min7', tab: 'x-0-2-0-1-0' },
+
+    // Sus chords
+    { name: 'Open Dsus4',      root: 2,  type: 'Sus4', tab: 'x-x-0-2-3-3' },
+    { name: 'Open Asus2',      root: 9,  type: 'Sus2', tab: 'x-0-2-2-0-0' },
+    { name: 'Open Dsus2',      root: 2,  type: 'Sus2', tab: 'x-x-0-2-3-0' },
+
+    // Dim
+    { name: 'Bdim (open pos)', root: 11, type: 'Dim',  tab: 'x-2-3-4-3-x' },
+
+    // Aug
+    { name: 'Caug (open pos)', root: 0,  type: 'Aug',  tab: 'x-3-2-1-1-0' },
+  ];
+
+  for (const { name, root, type, tab } of goldenSet) {
+    test(`generates ${name}: ${tab}`, () => {
+      const voicings = getChordVoicings(root, type);
+      const target = tabToVoicing(tab);
+      expect(voicingsContain(voicings, target)).toBe(true);
+    });
+  }
+});
