@@ -304,3 +304,17 @@ describe('Golden set regression', () => {
     });
   }
 });
+
+describe('Voicing count snapshots', () => {
+  test('voicing counts match snapshot', () => {
+    const countMap: Record<string, number> = {};
+    for (const type of ALL_TYPES) {
+      for (const root of ALL_ROOTS) {
+        const key = `${root}-${type}`;
+        const voicings = getChordVoicings(root, type);
+        countMap[key] = voicings.length;
+      }
+    }
+    expect(countMap).toMatchSnapshot();
+  });
+});
