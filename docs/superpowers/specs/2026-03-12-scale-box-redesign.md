@@ -38,7 +38,7 @@ Walk the low E string (`STANDARD_TUNING[5] = 4`) from fret 0 to `TOTAL_FRETS`, c
 
 Find `idx_root` = the index of the root anchor in the sorted low-E anchor list (first fret where `(STANDARD_TUNING[5] + fret) % 12 === root`).
 
-**Select N consecutive anchors** starting from index `max(0, idx_root - 1)`. This always includes at most 1 anchor below the root anchor (when one exists), plus the root anchor, plus N−2 anchors above it.
+**Select N consecutive anchors** starting from index `max(0, idx_root - 1)`. This always includes **at most 1 anchor below the root anchor** (when one exists), plus the root anchor, plus N−2 anchors above it. Anchors further below the root (at indices `idx_root - 2`, `idx_root - 3`, …) are intentionally excluded — we show at most one below-root box position.
 
 Label the selected anchors:
 - The anchor at `idx_root` → **Box 1**
@@ -66,9 +66,13 @@ For each box with anchor `A[i]`, define:
 ```
 A_next  = the anchor immediately above A[i] in the selected N-anchor set
           (for the highest anchor in the set, A_next = selected[0] + 12,
-           where selected[0] is the lowest-fret anchor in the selected N-anchor set —
-           this may be the below-root Box N anchor when one exists, e.g. for Am pentatonic
-           selected = [3, 5, 8, 10, 12], so selected[0] = 3 and A_next = 15)
+           where selected[0] is the lowest-fret anchor in the selected N-anchor set.
+           This is correct in both cases:
+           - With a below-root box: selected[0] is that box's anchor (e.g. Am pent: [3,5,8,10,12],
+             selected[0]=3, A_next for fret-12 box = 15)
+           - Without a below-root box: selected[0] is the root anchor itself
+             (e.g. E major, root at fret 0: selected[0]=0, A_next for the top box wraps to fret 12)
+           In both cases the formula gives the octave-above start of the next cycle.)
 
 windowStart = A[i] - 1
 windowEnd   = A_next + 1
@@ -113,7 +117,7 @@ Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 
   1. `activeNoteSet` memo
   2. `boxHighlights` memo
   3. Inline `FretboardViewer` `notes` prop (currently `positions.filter(p => p.label === \`Box ${parseInt(key) + 1}\`).flatMap(...)`)
-- Reset `activePositions` to `new Set(['all'])` whenever `type` changes (add a `useEffect` on `type` that calls `setActivePositions(new Set(['all']))`). This prevents stale labels (e.g. `'Box 6'` selected for Blues, then switching to Major Pent. which has 5 boxes) from producing an empty fretboard.
+- Reset `activePositions` to `new Set(['all'])` whenever `type` changes (add a `useEffect` on `type` that calls `setActivePositions(new Set(['all']))`). This prevents stale labels (e.g. `'Box 6'` selected for Blues, then switching to Major Pent. which has 5 boxes) from producing an empty fretboard. `root` and `mode` changes do not affect box count (N depends only on `intervals.length`) so no reset is needed for those.
 - Rewrite `positionOptions`, `activeChipOptions`, and `handlePositionChipToggle` so chip labels match box labels exactly:
   - `positionOptions = ['All', ...positions.map(p => p.label)]` (depends on `positions`)
   - `activeChipOptions`: when `activePositions.has('all')` return `new Set(['All'])`; otherwise return the `activePositions` Set directly (keys are already display labels)
@@ -136,7 +140,7 @@ The following existing tests assert the old (incorrect) behaviour and must be de
 
 - `'each box spans exactly 3 frets (fretEnd - fretStart === 3)'` — delete; dynamic spans replace the fixed 4-fret window
 - `'A minor pentatonic produces 5 boxes (single copy each)'` — replace with updated assertions (correct fretStart values)
-- `'Box 1 always starts at the root note on low E string'` (both variants) — update: after the redesign, `positions[0]` is the lowest-fret box (Box N, a below-root box), not Box 1. The test must find the position with `label === 'Box 1'` before asserting its fretStart
+- `'Box 1 always starts at the root note on low E string'` (both variants) — **delete entirely**; the Layer 1 property-based test `'Box 1 exists and contains root on low E'` is the replacement. After the redesign `positions[0]` is the lowest-fret box (Box N, a below-root box), not Box 1, so these tests assert the wrong element by index.
 
 ### Layer 1: Property-Based Tests
 
