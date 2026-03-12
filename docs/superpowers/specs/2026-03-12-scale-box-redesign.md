@@ -47,7 +47,7 @@ Label the selected anchors:
 
 When there is no below-root anchor (i.e. `idx_root = 0`, so `max(0, idx_root - 1) = 0`), all N anchors start at the root and ascend: Box 1, Box 2 … Box N. There is no gap in numbering.
 
-**If there are fewer than N anchors from the starting index to the end of the low-E anchor list**, take as many as are available (truncate rather than wrap). Any anchor whose computed box window falls entirely off the fretboard is then skipped. In practice, for all 12 roots with TOTAL_FRETS = 24, the full anchor list has enough entries that this truncation does not occur — the property-based tests may assert exactly `intervals.length` positions for all 84 root × scale-type combinations.
+**If there are fewer than N anchors from the starting index to the end of the low-E anchor list**, take as many as are available (truncate rather than wrap). Any anchor whose computed box window falls entirely off the fretboard is then skipped. In practice, for all 12 roots with TOTAL_FRETS = 24, the full anchor list always has enough entries — the property-based tests must assert exactly `intervals.length` positions for all 84 root × scale-type combinations.
 
 **Example — Am pentatonic (root A = 9):**
 
@@ -84,7 +84,7 @@ The `-1` on `windowStart` captures notes one fret below the anchor that appear o
 
 Note that `windowStart` may be negative (e.g., anchor at fret 0 gives `windowStart = -1`); the loop is clamped to `max(0, windowStart)` so it is always non-negative.
 
-**Open strings:** Additionally, for any string where the open-string pitch (fret 0) is a scale tone, include fret 0 if the box's anchor `A[i] ≤ 5`. This captures standard open-position fingering patterns (e.g., Box 5 of Am pentatonic anchored at fret 3 naturally includes open E, A, D, G strings) without adding spurious open-string notes to upper-neck positions.
+**Open strings:** Additionally, for any string where the open-string pitch (fret 0) is a scale tone, include fret 0 if the box's anchor `A[i] ≤ 5`. The threshold 5 corresponds to the first-position zone (roughly frets 1–4) where open-string fingerings are standard practice; boxes anchored above fret 5 are far enough from the nut that open strings are not part of the standard pattern for that position. This captures standard open-position fingering patterns (e.g., Box 5 of Am pentatonic anchored at fret 3 naturally includes open E, A, D, G strings) without adding spurious open-string notes to upper-neck positions.
 
 After collecting all notes:
 
@@ -146,7 +146,7 @@ The following existing tests assert the old (incorrect) behaviour and must be de
 
 Run across all 12 roots × 7 scale types (84 combinations):
 
-- **Correct box count:** returns exactly `intervals.length` positions (for all 12 roots with TOTAL_FRETS = 24 this should always be exactly N — the truncation path is not expected to fire)
+- **Correct box count:** returns exactly `intervals.length` positions for all 84 root × scale-type combinations
 - **Box 1 exists and contains root on low E:** the position with `label === 'Box 1'` has at least one note with `isRoot === true` on string s:5
 - **Ascending order:** positions are sorted by `fretStart` ascending
 - **Scale tones only:** every note in every box has `interval` in the scale's interval set
@@ -169,7 +169,7 @@ Specific positions verified against standard guitar references:
 
 **C major (root 0, intervals `[0,2,4,5,7,9,11]`):**
 - Returns exactly 7 positions
-- The position with `label === 'Box 1'` has `fretStart === 8`
+- The position with `label === 'Box 1'` has `fretStart === 7` (anchor at fret 8; windowStart = 7; fret 7 on low E gives B, interval 11 — a scale tone — so fretStart = 7)
 
 ### Layer 3: Regression Tests
 
