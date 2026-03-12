@@ -7,17 +7,19 @@
 
 `computeScalePositions` in `src/engine/scales.ts` uses hardcoded offsets `[0, 2, 4, 7, 9]` to place boxes on the fretboard. This produces several concrete bugs:
 
-1. **Incorrect octave wrap.** `if (startFret > 12) startFret -= 12` wraps boxes that exceed fret 12 to a lower position. For A minor pentatonic (root at fret 5), Box 5 is placed at frets 2–5 instead of the correct 14–17. All positions ≤ TOTAL_FRETS are valid on a 24-fret guitar and should never wrap.
+1. **Incorrect octave wrap.** `if (startFret > 12) startFret -= 12` wraps any box anchor exceeding fret 12 to a lower position. For most roots this fires incorrectly — Box 5 of Am pentatonic (natural anchor fret 14) is displaced to fret 2, but in the wrong way: the displacement happens because the anchor is computed as 14, not because fret 2 is the correct below-root position. The notes end up approximately right but for the wrong reason.
 
 2. **Missing stretch notes.** The fixed 4-fret span (`endFret = startFret + 3`) excludes notes just outside the window. For Am pentatonic Box 3, the standard B-string note at fret 13 is cut off because the window ends at fret 12.
 
-3. **Wrong box count for 7-note scales.** The code always generates 5 boxes regardless of scale type. Major, natural minor, harmonic minor, and melodic minor have 7 unique hand positions (one per scale degree), not 5.
+3. **Wrong box count for 7-note scales.** The code always generates 5 boxes. Major, natural minor, harmonic minor, and melodic minor have 7 unique hand positions (one per scale degree). Blues has 6. Only the 5-note pentatonic scales naturally produce exactly 5 positions.
 
-4. **Hardcoded offsets don't generalize.** The offsets are empirically tuned for pentatonic patterns. They produce incorrect anchor positions for 7-note scales where the interval spacing differs.
+4. **Hardcoded offsets don't generalize.** The offsets are empirically tuned for pentatonic patterns and produce incorrect anchor positions for other scale types.
 
 ## Goal
 
-Replace hardcoded offsets with a computed approach that derives box anchor positions directly from scale notes on the low E string. This generalizes correctly to all scale types without manual tuning, produces the right number of boxes per scale, includes standard stretch notes, and eliminates the wrap bug.
+Replace hardcoded offsets with a computed approach that derives box anchor positions directly from scale notes on the low E string. This generalizes correctly to all scale types, produces the right number of boxes per scale, includes standard stretch notes and open strings, and eliminates the wrap bug.
+
+**Box 1 is always the position containing the root note on the low E string. Boxes 2…N ascend the neck. If positions exist below Box 1 on the neck (i.e., the root is not the lowest scale tone on low E), those positions are assigned the high box numbers (Box N just below root, Box N−1 one step further down, etc.) and displayed to the left of Box 1 on screen.**
 
 ## Design
 
@@ -27,31 +29,56 @@ Replace hardcoded offsets with a computed approach that derives box anchor posit
 
 #### Step 1 — Find anchors
 
-Walk the low E string (`STANDARD_TUNING[5]`) from fret 0 to `TOTAL_FRETS`, collecting every fret where the pitch is a scale tone. Each such fret is a natural hand-position anchor — the fret where the index finger lands for that box.
+Walk the low E string (`STANDARD_TUNING[5] = 4`) from fret 0 to `TOTAL_FRETS`, collecting every fret where the pitch is a scale tone. Sort ascending. Call this the **low-E anchor list**.
 
-`N = intervals.length` defines the number of unique positions: 5 for pentatonic and blues, 7 for 7-note scales (major, natural minor, harmonic minor, melodic minor).
+`N = intervals.length` — the number of unique positions:
+- 5 for 5-note scales (Major Pent., Minor Pent.)
+- 6 for 6-note scales (Blues)
+- 7 for 7-note scales (Major, Nat. Minor, Harm. Minor, Melodic Minor)
 
-Extract a window of N consecutive anchors from the full low-E anchor list such that:
-- The anchor where `(STANDARD_TUNING[5] + fret) % 12 === root` is included and labeled **Box 1**
-- Anchors ascending from Box 1 are labeled Box 2, Box 3 … Box N
-- Anchors below Box 1 (lower frets) receive the highest box numbers, wrapping: the anchor just below Box 1 is Box N, the next lower is Box N−1, and so on
+Find `idx_root` = the index of the root anchor in the sorted low-E anchor list (first fret where `(STANDARD_TUNING[5] + fret) % 12 === root`).
 
-Any anchor whose box window would fall entirely off the fretboard is skipped. The function may return fewer than N boxes for extreme roots near fret 0 or fret 24.
+**Select N consecutive anchors** starting from index `max(0, idx_root - 1)`. This always includes at most 1 anchor below the root anchor (when one exists), plus the root anchor, plus N−2 anchors above it.
+
+Label the selected anchors:
+- The anchor at `idx_root` → **Box 1**
+- Anchors above Box 1 in ascending order → Box 2, Box 3 … (up to Box N)
+- The anchor below Box 1 (if present at position `idx_root - 1`) → Box N
+
+Any anchor whose computed box window falls entirely off the fretboard is skipped. The function may return fewer than N boxes for roots near fret 0 or fret 24.
+
+**Example — Am pentatonic (root A = 9):**
+
+Low-E anchor list: frets 0(E), 3(G), 5(A), 8(C), 10(D), 12(E), 15(G), …
+
+`idx_root = 2` (fret 5). `max(0, 2-1) = 1`. Take 5 anchors starting from index 1: **[3, 5, 8, 10, 12]**.
+
+Labeling: anchor 3 → Box 5 (below root), anchor 5 → Box 1, anchor 8 → Box 2, anchor 10 → Box 3, anchor 12 → Box 4.
+
+Boxes appear on screen left to right as: Box 5, Box 1, Box 2, Box 3, Box 4.
 
 #### Step 2 — Build box notes (dynamic span)
 
-For each box with anchor `A[i]`, define the note window as:
+For each box with anchor `A[i]`, define:
 
 ```
+A_next  = the anchor immediately above A[i] in the selected N-anchor set
+          (for the highest anchor in the set, A_next = sorted_anchors[0] + 12,
+           where sorted_anchors[0] is the lowest anchor in the selected set)
+
 windowStart = A[i] - 1
 windowEnd   = A_next + 1
 ```
 
-where `A_next` is the anchor immediately above `A[i]` in the cycle. For the last (highest) box, `A_next = anchors[0] + 12` (the first anchor one octave up), guaranteeing a well-defined window for all boxes.
+Include all scale tones on all 6 strings with `fret ∈ [max(0, windowStart), min(TOTAL_FRETS, windowEnd)]`.
 
-The `-1` on `windowStart` captures notes one fret below the anchor that appear on the A, D, and G strings in several pentatonic and major scale positions. The `+1` on `windowEnd` captures the one-fret overhang on the B string caused by the major-third tuning interval between the G and B strings (e.g., the B-string note at fret 13 in Am pentatonic Box 3, which is part of every standard reference for that position).
+The `-1` on `windowStart` captures notes one fret below the anchor that appear on the A, D, and G strings in several pentatonic and major-scale positions. The `+1` on `windowEnd` captures the one-fret overhang on the B string caused by the major-third tuning interval between G and B strings (e.g., the B-string note at fret 13 in Am pentatonic Box 3).
 
-Include all scale tones on all 6 strings with `fret ∈ [windowStart, windowEnd]`, clamped to `[0, TOTAL_FRETS]`. Open strings (fret 0) are included naturally when `windowStart ≤ 0`.
+Note that `windowStart` may be negative (e.g., anchor at fret 0 gives `windowStart = -1`); the loop is clamped to `max(0, windowStart)` so it is always non-negative.
+
+**Open strings:** Additionally, for any string where the open-string pitch (fret 0) is a scale tone, include fret 0 if the box's anchor `A[i] ≤ 5`. This captures standard open-position fingering patterns (e.g., Box 5 of Am pentatonic anchored at fret 3 naturally includes open E, A, D, G strings) without adding spurious open-string notes to upper-neck positions.
+
+After collecting all notes:
 
 ```
 fretStart = min(note.fret for all included notes)
@@ -62,7 +89,7 @@ fretEnd   = max(note.fret for all included notes)
 
 #### Step 3 — Sort and label
 
-Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 1 appears at whatever position it falls in the sorted order (not necessarily first, since below-root boxes have lower fret positions). Labels are stable: Box 1 always means the root position, Box 2 is the next pattern up the neck from Box 1, and so on.
+Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 1 will appear at whatever position it occupies in the sorted order — not necessarily first, since below-root boxes sort lower.
 
 ### What Changes
 
@@ -71,14 +98,14 @@ Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 
 - Delete `NUM_BOXES` constant
 - Delete the octave-wrap block (`if (startFret > 12) startFret -= 12`)
 - Delete the fixed `endFret = startFret + 3` logic
-- Add `findAnchors(root, intervals)` — walks low E, returns the N anchor frets with the root anchor identified
+- Add `findAnchors(root, intervals)` — walks low E, returns the N selected anchor frets
 - Rewrite the main loop in `computeScalePositions` to use computed anchors and dynamic windows
 
 **`src/screens/ScalesScreen.tsx`:**
 - Remove the hardcoded `const NUM_BOXES = 5`
-- Derive position chips directly from `positions.map(p => p.label)` instead of generating `Pos 1`…`Pos 5` independently
+- Derive position chips directly from `positions.map(p => p.label)` (e.g. `"Box 5"`, `"Box 1"`, `"Box 2"`) instead of generating `Pos 1`…`Pos 5` independently
 - Change `activePositions` Set to store box labels (`'Box 1'`, `'Box 2'`…) instead of index strings, simplifying the lookup — no more `parseInt` offset arithmetic
-- Update `activeNoteSet` and `boxHighlights` memos to match by `p.label === key` directly
+- Update `activeNoteSet` and `boxHighlights` memos to match positions by `p.label === key` directly
 
 ### What Does NOT Change
 
@@ -91,12 +118,20 @@ Sort the N boxes by `fretStart` ascending before returning. The box labeled Box 
 
 ## Testing Strategy
 
+### Tests to Retire
+
+The following existing tests assert the old (incorrect) behaviour and must be deleted or replaced:
+
+- `'each box spans exactly 3 frets (fretEnd - fretStart === 3)'` — delete; dynamic spans replace the fixed 4-fret window
+- `'A minor pentatonic produces 5 boxes (single copy each)'` — replace with updated assertions (correct fretStart values)
+- `'Box 1 always starts at the root note on low E string'` (both variants) — update: after the redesign, `positions[0]` is the lowest-fret box (Box N, a below-root box), not Box 1. The test must find the position with `label === 'Box 1'` before asserting its fretStart
+
 ### Layer 1: Property-Based Tests
 
 Run across all 12 roots × 7 scale types (84 combinations):
 
-- **Correct box count:** returns exactly `intervals.length` positions (or fewer only when boxes fall off the fretboard near the edges)
-- **Box 1 contains root on low E:** the notes for the Box 1 position include the root pitch class on string s:5
+- **Correct box count:** returns exactly `intervals.length` positions (or fewer when boxes fall off the fretboard at extreme frets)
+- **Box 1 exists and contains root on low E:** the position with `label === 'Box 1'` has at least one note with `isRoot === true` on string s:5
 - **Ascending order:** positions are sorted by `fretStart` ascending
 - **Scale tones only:** every note in every box has `interval` in the scale's interval set
 - **Valid span:** `fretEnd > fretStart` for every box
@@ -108,26 +143,25 @@ Run across all 12 roots × 7 scale types (84 combinations):
 
 Specific positions verified against standard guitar references:
 
-- **Am pentatonic (root 9):**
-  - Returns exactly 5 positions
-  - Box 1 fretStart = 5
-  - Box 2 fretStart = 7 (or 8 — the anchor on low E)
-  - Box 3 fretStart ≤ 10, fretEnd ≥ 13 (includes B-string stretch note)
-  - Box 4 fretStart = 12
-  - Box 5 fretStart = 14 (NOT 2 — the old wrap artifact)
-  - Box 5 (or lowest box) includes open-string notes (fret 0 on low E and high E = E, open A = A)
+**Am pentatonic (root 9, intervals `[0,3,5,7,10]`):**
+- Returns exactly 5 positions
+- The position with `label === 'Box 1'` has `fretStart === 5`
+- The position with `label === 'Box 2'` has `fretStart` in the range 7–8
+- The position with `label === 'Box 3'` has `fretEnd >= 13` (includes the B-string stretch note at fret 13)
+- The position with `label === 'Box 4'` has `fretStart === 12`
+- The position with `label === 'Box 5'` has `fretStart <= 4` (the below-root open-position box) and includes at least one note at `fret === 0` (open string)
 
-- **C major (root 0):**
-  - Returns exactly 7 positions
-  - Box 1 fretStart = 8
+**C major (root 0, intervals `[0,2,4,5,7,9,11]`):**
+- Returns exactly 7 positions
+- The position with `label === 'Box 1'` has `fretStart === 8`
 
 ### Layer 3: Regression Tests
 
-- Am pentatonic produces no position with `fretStart === 2` (old wrap artifact)
-- No scale type produces exactly 5 boxes when `intervals.length === 7`
+- Am pentatonic: no position has `label === 'Box 5'` AND `fretStart >= 14` (the old wrap-produced high-fret Box 5 no longer appears at the expense of the below-root position)
+- No 7-note scale returns exactly 5 boxes for any root (box count must be 7, not 5)
 
 ## Known Limitations
 
-- **Adjacent boxes share notes.** The `[A-1, A_next+1]` window means notes in the overlap zone appear in two consecutive boxes. This matches standard guitar teaching (adjacent positions share boundary notes) and is intentional.
-- **Open-position boxes span fret 0.** When a box includes open strings, `fretStart = 0`. The box highlight in `GuitarNeck` already handles fret 0 correctly via the `FB.openStringWidth` path.
-- **Extreme roots near high frets.** For roots that place Box N near fret 21+, the dynamic window may clip some notes at TOTAL_FRETS. These edge cases are acceptable — no guitarist regularly plays 7-box patterns starting at fret 20.
+- **Adjacent boxes share notes.** The `[A-1, A_next+1]` window plus the open-string rule means notes in the overlap zone appear in two consecutive boxes. This matches standard guitar teaching (adjacent positions share boundary notes) and is intentional.
+- **Blues produces 6 positions.** `intervals.length = 6` for the Blues scale, so the algorithm returns 6 positions. Most beginner references fold the blue note (b5) into the surrounding pentatonic boxes rather than treating it as a separate position anchor. Displaying 6 positions is technically correct; whether the UI should cap Blues at 5 is a future UX decision.
+- **Extreme roots near high frets.** For roots where boxes fall near fret 24, the dynamic window may clip some notes at `TOTAL_FRETS`. These edge cases are acceptable.
