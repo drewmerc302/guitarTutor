@@ -99,22 +99,31 @@ function countInteriorMutes(voicing: ChordVoicing): number {
 
 /**
  * Score a voicing for playability (lower = better).
+ * Pass root to award a bonus when the bass note is the chord root (root position).
  */
-function scorePlayability(voicing: ChordVoicing): number {
+function scorePlayability(voicing: ChordVoicing, root?: number): number {
   let score = 0;
   const fretted = voicing.filter(v => v.f > 0).map(v => v.f);
   const played = voicing.filter(v => v.f >= 0).length;
-  const muted = voicing.filter(v => v.f === -1).length;
 
   if (fretted.length > 0) {
     score += Math.max(...fretted) - Math.min(...fretted); // +1 per fret of stretch
   }
   score += countInteriorMutes(voicing) * 2; // +2 per interior gap (exterior mutes not penalized)
   score -= Math.min(3, Math.max(0, played - 3)); // -1 per extra string beyond 3, capped at -3
-  // Bonus for open-string voicings (practical low-fret shapes)
-  if (voicing.some(v => v.f === 0)) score -= 1;
   // Bonus for first-position voicings (all fretted notes in frets 1-4)
   if (fretted.length > 0 && Math.max(...fretted) <= 4) score -= 2;
+  // Bonus for root-position voicings (bass note = chord root)
+  // Strongly prefers standard barre and open chord shapes over inversions/partial voicings
+  if (root !== undefined) {
+    for (let s = 5; s >= 0; s--) {
+      const v = voicing.find(n => n.s === s);
+      if (v && v.f >= 0) {
+        if ((STANDARD_TUNING[s] + v.f) % 12 === root % 12) score -= 2;
+        break;
+      }
+    }
+  }
 
   return score;
 }
@@ -147,6 +156,55 @@ function classifyInversion(
   if (bassPC === firstPC) return '1st';
   if (bassPC === secondPC) return '2nd';
   return 'other';
+}
+
+/**
+ * Returns true if the voicing has a barre-chord pattern with an open string within the barre span.
+ *
+ * A barre is detected when ALL of these hold:
+ *   1. Fretted span ≥ 2  — there are at least two distinct fret positions, requiring separate
+ *      finger placements beyond a single cluster (distinguishes barre chords from open shapes
+ *      like A major where all fretted notes sit at the same fret).
+ *   2. ≥ 2 strings share the minimum fretted fret — the index finger must barre across them.
+ *      Single-note low-fret outliers (e.g. open C major's fret-1 B string) are not barres.
+ *   3. An open string falls within the string-index span of those barred strings — physically
+ *      impossible, because the barre finger presses every string across that span.
+ *
+ * This correctly rejects:  F major with open A (barre at fret 1 spans s0–s5)
+ *                          B major at fret 7 with open B string (barre at fret 7 spans s0–s5)
+ * And correctly allows:    G major 3-2-0-0-0-3  (span = 1, below threshold)
+ *                          A major x-0-2-2-2-0  (span = 0, single cluster)
+ *                          A7 x-0-2-0-2-0       (span = 0)
+ *                          C major x-3-2-0-1-0  (only 1 string at min fret)
+ *                          Caug x-3-2-1-1-0     (open high-E is outside barre span [1,2])
+ */
+function hasOpenStringInBarreRange(voicing: ChordVoicing): boolean {
+  const fretted = voicing.filter(v => v.f > 0);
+  if (fretted.length < 2) return false;
+
+  const frets = fretted.map(v => v.f);
+  const span = Math.max(...frets) - Math.min(...frets);
+  if (span < 2) return false;
+
+  const minFret = Math.min(...frets);
+  const barreStrings = fretted.filter(v => v.f === minFret).map(v => v.s);
+  if (barreStrings.length < 2) return false;
+
+  const lo = Math.min(...barreStrings);
+  const hi = Math.max(...barreStrings);
+  return voicing.some(v => v.f === 0 && v.s >= lo && v.s <= hi);
+}
+
+/**
+ * Returns true if the voicing has both an interior muted string and any open string.
+ * Interior mutes (gaps between played strings) combined with open strings create voicings
+ * that are awkward or unplayable — the fingers needed to reach around the gap also prevent
+ * clean open-string ringing. Standard chord shapes never combine these two features.
+ */
+function hasInteriorMuteWithOpenString(voicing: ChordVoicing): boolean {
+  if (!voicing.some(v => v.f === 0)) return false;
+  if (countInteriorMutes(voicing) === 0) return false;
+  return true;
 }
 
 /**
@@ -198,6 +256,11 @@ function generateVoicings(root: number, intervals: number[]): ChordVoicing[] {
       }
       if (!hasAll) continue;
 
+      // Reject voicings with open strings within a full barre span (physically impossible)
+      if (hasOpenStringInBarreRange(voicing)) continue;
+      // Reject voicings mixing interior mutes with open strings (awkward/unplayable shapes)
+      if (hasInteriorMuteWithOpenString(voicing)) continue;
+
       // Dedup by string-to-fret mapping
       const key = voicing
         .slice()
@@ -207,7 +270,7 @@ function generateVoicings(root: number, intervals: number[]): ChordVoicing[] {
       if (seen.has(key)) continue;
       seen.add(key);
 
-      results.push({ voicing, score: scorePlayability(voicing) });
+      results.push({ voicing, score: scorePlayability(voicing, root) });
     }
   }
 

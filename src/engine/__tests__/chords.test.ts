@@ -264,6 +264,7 @@ describe('Golden set regression', () => {
 
     // Major barre chords
     { name: 'F barre (E-shape)',  root: 5,  type: 'Major', tab: '1-3-3-2-1-1' },
+    { name: 'B barre (A-shape)',  root: 11, type: 'Major', tab: 'x-2-4-4-4-2' },
     { name: 'Bb barre (A-shape)', root: 10, type: 'Major', tab: 'x-1-3-3-3-1' },
 
     // Minor open chords
@@ -303,6 +304,28 @@ describe('Golden set regression', () => {
       expect(voicingsContain(voicings, target)).toBe(true);
     });
   }
+});
+
+function voicingToTab(voicing: ChordVoicing): string {
+  const sorted = [...voicing].sort((a, b) => b.s - a.s);
+  return sorted.map(v => v.f === -1 ? 'x' : v.f).join('-');
+}
+
+describe('Voicing ranking: voicings[0] is the standard shape', () => {
+  test('B major voicings[0] is x-2-4-4-4-2 (A-shape barre)', () => {
+    const voicings = getChordVoicings(11, 'Major');
+    expect(voicingToTab(voicings[0])).toBe('x-2-4-4-4-2');
+  });
+
+  test('F major voicings[0] is 1-3-3-2-1-1 (E-shape barre)', () => {
+    const voicings = getChordVoicings(5, 'Major');
+    expect(voicingToTab(voicings[0])).toBe('1-3-3-2-1-1');
+  });
+
+  test('C major voicings[0] is x-3-2-0-1-0 (open C)', () => {
+    const voicings = getChordVoicings(0, 'Major');
+    expect(voicingToTab(voicings[0])).toBe('x-3-2-0-1-0');
+  });
 });
 
 describe('Voicing count snapshots', () => {

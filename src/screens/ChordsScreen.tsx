@@ -12,28 +12,6 @@ import { assignFingers } from '../engine/fingers';
 import { NATURAL_NAMES, ROOT_TO_NATURAL_POS } from '../components/RootPicker';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-function getMinFret(voicing: ChordVoicing): number {
-  let minFret = Infinity;
-  for (const v of voicing) {
-    if (v.f >= 0 && v.f < minFret) {
-      minFret = v.f;
-    }
-  }
-  return minFret === Infinity ? 0 : minFret;
-}
-
-function findClosestToNutIndex(voicings: ChordVoicing[]): number {
-  let closestIndex = 0;
-  let closestMinFret = Infinity;
-  for (let i = 0; i < voicings.length; i++) {
-    const minFret = getMinFret(voicings[i]);
-    if (minFret < closestMinFret) {
-      closestMinFret = minFret;
-      closestIndex = i;
-    }
-  }
-  return closestIndex;
-}
 
 export function ChordsScreen() {
   const { theme } = useTheme();
@@ -52,11 +30,10 @@ export function ChordsScreen() {
   const voicings = useMemo(() => getChordVoicings(root, type, inversion.toLowerCase() as InversionFilter), [root, type, inversion]);
   const voicingRegions = useMemo(() => buildVoicingRegions(voicings, root), [voicings, root]);
 
-  // Default to voicing closest to nut
-  const defaultVoicingIndex = useMemo(() => findClosestToNutIndex(voicings), [voicings]);
+  // Default to voicings[0] — the best-scored voicing (root-position, first-position bias built into scoring)
   useEffect(() => {
-    setActiveVoicingIndex(defaultVoicingIndex);
-  }, [defaultVoicingIndex]);
+    setActiveVoicingIndex(0);
+  }, [voicings]);
 
   const activeRegion = voicingRegions[activeVoicingIndex];
   const activeVoicing = activeRegion ? activeRegion.voicing : null;
@@ -94,11 +71,8 @@ export function ChordsScreen() {
     const filteredVoicings = getChordVoicings(newRoot, type, currentInversion);
     if (filteredVoicings.length === 0) {
       setInversion('All');
-      const allVoicings = getChordVoicings(newRoot, type, 'all');
-      setActiveVoicingIndex(findClosestToNutIndex(allVoicings));
-    } else {
-      setActiveVoicingIndex(findClosestToNutIndex(filteredVoicings));
     }
+    setActiveVoicingIndex(0);
   };
 
   const handleTypeChange = (newType: string) => {
@@ -107,11 +81,8 @@ export function ChordsScreen() {
     const filteredVoicings = getChordVoicings(root, newType, currentInversion);
     if (filteredVoicings.length === 0) {
       setInversion('All');
-      const allVoicings = getChordVoicings(root, newType, 'all');
-      setActiveVoicingIndex(findClosestToNutIndex(allVoicings));
-    } else {
-      setActiveVoicingIndex(findClosestToNutIndex(filteredVoicings));
     }
+    setActiveVoicingIndex(0);
   };
 
   const handleInversionChange = (newInversion: string) => {

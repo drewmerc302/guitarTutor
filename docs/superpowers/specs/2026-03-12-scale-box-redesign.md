@@ -181,3 +181,4 @@ Specific positions verified against standard guitar references:
 - **Adjacent boxes share notes.** The `[A-1, A_next+1]` window plus the open-string rule means notes in the overlap zone appear in two consecutive boxes. This matches standard guitar teaching (adjacent positions share boundary notes) and is intentional.
 - **Blues produces 6 positions.** `intervals.length = 6` for the Blues scale, so the algorithm returns 6 positions and the position chip row shows 7 chips (All + Box 1…Box 6). Most beginner references fold the blue note (b5) into the surrounding pentatonic boxes rather than treating it as a separate position anchor. Displaying 6 positions is technically correct and the variable chip count is intentional; whether the UI should cap Blues at 5 is a future UX decision.
 - **Extreme roots near high frets.** For roots where boxes fall near fret 24, the dynamic window may clip some notes at `TOTAL_FRETS`. These edge cases are acceptable.
+ 
