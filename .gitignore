@@ -45,3 +45,7 @@ yarn-error.*
 
 # git worktrees
 .worktrees/
+
+# internal development docs
+docs/superpowers/
+mockups/

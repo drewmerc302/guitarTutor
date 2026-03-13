@@ -67,9 +67,6 @@
     ],
     "moduleNameMapper": {
       "^@expo/vector-icons(.*)$": "<rootDir>/src/__mocks__/expoVectorIcons.js"
-    },
-    "moduleNameMapper": {
-      "^@expo/vector-icons(.*)$": "<rootDir>/src/__mocks__/expoVectorIcons.js"
     }
   }
 }
