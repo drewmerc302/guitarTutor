@@ -2,6 +2,16 @@
 
 A React Native mobile app for learning guitar music theory. Visualize chords, scales, arpeggios, triads, and chord progressions on an interactive fretboard — with support for different hand orientations, capo positions, and color themes.
 
+## Screenshots
+
+<p float="left">
+  <img src="docs/screenshots/chords.png" width="19%" alt="Chords screen" />
+  <img src="docs/screenshots/scales.png" width="19%" alt="Scales screen" />
+  <img src="docs/screenshots/progressions.png" width="19%" alt="Progressions screen" />
+  <img src="docs/screenshots/arpeggios.png" width="19%" alt="Arpeggios screen" />
+  <img src="docs/screenshots/triads.png" width="19%" alt="Triads screen" />
+</p>
+
 ## Features
 
 - **Chords** — Browse voicings for 12 chord types (Major, Minor, 7th, Maj7, Min7, Dim, Aug, Sus2, Sus4, Dim7, Min7b5, 9th). Filter by inversion. Tap root notes on the fretboard to cycle through voicings. View finger numbers, interval names, or note names.
