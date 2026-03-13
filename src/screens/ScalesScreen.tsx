@@ -1,5 +1,5 @@
 // src/screens/ScalesScreen.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +21,12 @@ export function ScalesScreen() {
   const [activePositions, setActivePositions] = useState<Set<string>>(new Set(['all']));
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
+  // Reset position selection when scale type changes to avoid stale box labels
+  // (e.g. 'Box 6' selected for Blues becoming invalid when switching to 5-box pentatonic)
+  useEffect(() => {
+    setActivePositions(new Set(['all']));
+  }, [type]);
+
   const scaleTypes = Object.keys(SCALE_TYPES);
   const is7Note = SCALE_TYPES[type]?.length === 7;
 
@@ -37,10 +43,7 @@ export function ScalesScreen() {
     if (isAllActive) return null;
     const set = new Set<string>();
     for (const key of activePositions) {
-      const boxNum = parseInt(key);
-      // Find ALL positions with this box number and add their notes
-      const matchingPositions = positions.filter(p => p.label === `Box ${boxNum + 1}`);
-      for (const pos of matchingPositions) {
+      for (const pos of positions.filter(p => p.label === key)) {
         for (const note of pos.notes) {
           set.add(`${note.string}-${note.fret}`);
         }
@@ -51,16 +54,13 @@ export function ScalesScreen() {
 
   const boxHighlights = useMemo(() => {
     if (isAllActive) return [];
-    // When a box is selected, show ALL instances of that box pattern across the fretboard
     return activePositions.size > 0
-      ? Array.from(activePositions).flatMap(key => {
-          const boxNum = parseInt(key);
-          // Find ALL positions with this box number (there may be multiple at different fret locations)
-          return positions.filter(p => p.label === `Box ${boxNum + 1}`).map(p => ({
+      ? Array.from(activePositions).flatMap(key =>
+          positions.filter(p => p.label === key).map(p => ({
             fretStart: p.fretStart,
             fretEnd: p.fretEnd,
-          }));
-        })
+          }))
+        )
       : [];
   }, [activePositions, positions, isAllActive]);
 
@@ -83,23 +83,21 @@ export function ScalesScreen() {
     });
   };
 
-  // Get unique box count based on scale type (5 for pentatonic, 7 for full scales)
-  const numBoxes = rotatedIntervals.length;
-  const positionOptions = useMemo(() => {
-    return ['All', ...Array.from({ length: numBoxes }, (_, i) => `Pos ${i + 1}`)];
-  }, [numBoxes]);
+  const positionOptions = useMemo(
+    () => ['All', ...positions.map(p => p.label)],
+    [positions]
+  );
 
   const activeChipOptions = useMemo((): Set<string> => {
     if (activePositions.has('all')) return new Set(['All']);
-    return new Set(Array.from(activePositions).map(k => `Pos ${parseInt(k) + 1}`));
+    return new Set(activePositions); // keys are already 'Box 1', 'Box 2', etc.
   }, [activePositions]);
 
   const handlePositionChipToggle = (opt: string) => {
     if (opt === 'All') {
       handlePositionToggle('all');
     } else {
-      const idx = positionOptions.indexOf(opt) - 1; // -1 for 'All' at index 0
-      handlePositionToggle(String(idx));
+      handlePositionToggle(opt); // opt is already 'Box 1', 'Box 2', etc.
     }
   };
 
@@ -158,12 +156,11 @@ export function ScalesScreen() {
 
         <View style={styles.neckContainer}>
           <FretboardViewer
-            notes={isAllActive 
-              ? positions.flatMap(p => p.notes) 
-              : Array.from(activePositions).flatMap(key => {
-                  const boxNum = parseInt(key);
-                  return positions.filter(p => p.label === `Box ${boxNum + 1}`).flatMap(p => p.notes);
-                })}
+            notes={isAllActive
+              ? positions.flatMap(p => p.notes)
+              : Array.from(activePositions).flatMap(key =>
+                  positions.filter(p => p.label === key).flatMap(p => p.notes)
+                )}
             displayMode={display.toLowerCase() as 'finger' | 'interval' | 'note'}
             activeNoteSet={activeNoteSet}
             boxHighlights={boxHighlights}
