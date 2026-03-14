@@ -38,11 +38,14 @@ Expected: All remaining tests pass. If any fail, you deleted the wrong block —
 
 - [ ] **Step 3: Commit**
 
+Write to `/tmp/msg.txt` using the Write tool:
+```
+test(progressions): delete removed-interaction tests
+```
+Then commit:
 ```bash
 git add src/screens/__tests__/ProgressionsScreen.test.tsx
 git commit -F /tmp/msg.txt
-# Write to /tmp/msg.txt first:
-# test(progressions): delete removed-interaction tests
 ```
 
 ---
@@ -256,14 +259,17 @@ test('circle of fifths inner ring uses dim quality fill', () => {
 npx jest src/screens/__tests__/ProgressionsScreen.test.tsx --no-coverage
 ```
 
-Expected output: The 9 updated circle tests **fail** (because `testID="circle-collapse-header"` doesn't exist yet — `findAll` returns `undefined`, `onPress` throws). All other tests pass. This confirms the tests are correctly wired and will pass once the implementation is in place.
+Expected output: The 9 updated circle tests **fail** (because `testID="circle-collapse-header"` doesn't exist yet — `findAll` returns an empty array, `[0]` is `undefined`, then `undefined.props.onPress()` throws `TypeError: Cannot read properties of undefined (reading 'props')`). All other tests pass. This confirms the tests are correctly wired and will pass once the implementation is in place.
 
 - [ ] **Step 8: Commit**
 
+Write to `/tmp/msg.txt` using the Write tool:
+```
+test(progressions): update circle tests to expand before querying SVG
+```
+Then commit:
 ```bash
 git add src/screens/__tests__/ProgressionsScreen.test.tsx
-# Write commit message to /tmp/msg.txt:
-# test(progressions): update circle tests to expand before querying SVG
 git commit -F /tmp/msg.txt
 ```
 
@@ -518,9 +524,13 @@ Expected: The 9 updated circle tests still fail (circle not yet collapsible). Al
 
 - [ ] **Step 8: Commit**
 
+Write to `/tmp/msg.txt` using the Write tool:
+```
+feat(progressions): add piano key picker and dynamic diatonic label
+```
+Then commit:
 ```bash
 git add src/screens/ProgressionsScreen.tsx src/screens/__tests__/ProgressionsScreen.test.tsx
-# /tmp/msg.txt: feat(progressions): add piano key picker and dynamic diatonic label
 git commit -F /tmp/msg.txt
 ```
 
@@ -692,9 +702,13 @@ Expected: The 9 updated circle tests still fail. All other tests pass (including
 
 - [ ] **Step 5: Commit**
 
+Write to `/tmp/msg.txt` using the Write tool:
+```
+feat(progressions): horizontal scroll + explicit ✕ remove button
+```
+Then commit:
 ```bash
 git add src/screens/ProgressionsScreen.tsx src/screens/__tests__/ProgressionsScreen.test.tsx
-# /tmp/msg.txt: feat(progressions): horizontal scroll + explicit ✕ remove button
 git commit -F /tmp/msg.txt
 ```
 
@@ -740,6 +754,29 @@ test('tapping circle header expands circle SVG', () => {
   expect(circleNodes.length).toBe(12);
 });
 
+test('tapping circle header a second time collapses circle', () => {
+  let tree: any;
+  act(() => { tree = create(<ProgressionsScreen />); });
+
+  const header = tree.root.findAll(
+    (el: any) => el.props.testID === 'circle-collapse-header'
+  )[0];
+  act(() => { header.props.onPress(); }); // expand
+
+  // Verify expanded
+  const nodesAfterExpand = tree.root.findAllByType('G').filter(
+    (el: any) => el.props.onPress != null
+  );
+  expect(nodesAfterExpand.length).toBe(12);
+
+  act(() => { header.props.onPress(); }); // collapse again
+
+  const nodesAfterCollapse = tree.root.findAllByType('G').filter(
+    (el: any) => el.props.onPress != null
+  );
+  expect(nodesAfterCollapse.length).toBe(0);
+});
+
 test('tapping a circle key node collapses circle and updates root', () => {
   let tree: any;
   act(() => { tree = create(<ProgressionsScreen />); });
@@ -771,10 +808,10 @@ test('tapping a circle key node collapses circle and updates root', () => {
 - [ ] **Step 2: Run new tests to verify they fail**
 
 ```bash
-npx jest src/screens/__tests__/ProgressionsScreen.test.tsx --no-coverage -t "collapsed by default|tapping circle header|circle key node"
+npx jest src/screens/__tests__/ProgressionsScreen.test.tsx --no-coverage -t "collapsed by default|tapping circle header|second time collapses|circle key node"
 ```
 
-Expected: All 3 fail — `testID="circle-collapse-header"` not found yet.
+Expected: All 4 fail — `testID="circle-collapse-header"` not found yet.
 
 ---
 
@@ -888,13 +925,13 @@ circleHeaderSub: { fontSize: 11, marginTop: 1 },
 circleChevron: { fontSize: 20, fontWeight: '300' },
 ```
 
-- [ ] **Step 6: Run the 3 new collapsible circle tests**
+- [ ] **Step 6: Run the 4 new collapsible circle tests**
 
 ```bash
-npx jest src/screens/__tests__/ProgressionsScreen.test.tsx --no-coverage -t "collapsed by default|tapping circle header|circle key node"
+npx jest src/screens/__tests__/ProgressionsScreen.test.tsx --no-coverage -t "collapsed by default|tapping circle header|second time collapses|circle key node"
 ```
 
-Expected: All 3 pass.
+Expected: All 4 pass.
 
 - [ ] **Step 7: Run the full test file — expect all tests to pass**
 
@@ -906,9 +943,13 @@ Expected: **All tests pass.** The 9 previously-failing circle tests now pass bec
 
 - [ ] **Step 8: Commit**
 
+Write to `/tmp/msg.txt` using the Write tool:
+```
+feat(progressions): collapsible Circle of Fifths row
+```
+Then commit:
 ```bash
 git add src/screens/ProgressionsScreen.tsx src/screens/__tests__/ProgressionsScreen.test.tsx
-# /tmp/msg.txt: feat(progressions): collapsible Circle of Fifths row
 git commit -F /tmp/msg.txt
 ```
 
@@ -943,9 +984,13 @@ Expected: All tests pass (the `jest.setup.ts` mock already handles `UIManager` a
 
 - [ ] **Step 3: Commit**
 
+Write to `/tmp/msg.txt` using the Write tool:
+```
+chore: enable LayoutAnimation on Android
+```
+Then commit:
 ```bash
 git add App.tsx
-# /tmp/msg.txt: chore: enable LayoutAnimation on Android
 git commit -F /tmp/msg.txt
 ```
 
@@ -978,8 +1023,16 @@ Verify:
 
 - [ ] **Step 3: Final commit if any polish was applied during smoke test**
 
+If changes were made during smoke test, stage the specific files that changed:
 ```bash
-git add -p
-# /tmp/msg.txt: chore(progressions): post-smoke-test polish
+git add src/screens/ProgressionsScreen.tsx
+```
+Write to `/tmp/msg.txt` using the Write tool:
+```
+chore(progressions): post-smoke-test polish
+```
+Then commit:
+```bash
 git commit -F /tmp/msg.txt
 ```
+If no changes were made during smoke test, skip this step.
