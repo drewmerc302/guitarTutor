@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useWindowDimensions, Modal } from 'react-native';
+import { useWindowDimensions, Modal, UIManager, Platform } from 'react-native';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { ChordsScreen } from './src/screens/ChordsScreen';
 import { ScalesScreen } from './src/screens/ScalesScreen';
@@ -15,6 +15,10 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ErrorBoundary } from './src/components';
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const Tab = createBottomTabNavigator();
 
