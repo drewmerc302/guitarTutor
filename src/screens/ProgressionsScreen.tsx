@@ -1,6 +1,6 @@
 // src/screens/ProgressionsScreen.tsx
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, LayoutAnimation } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Text as SvgText, G } from 'react-native-svg';
 import { usePersistentState } from '../hooks/usePersistentState';
@@ -11,11 +11,23 @@ import { getDiatonicChords, CIRCLE_OF_FIFTHS } from '../engine/progressions';
 import { getChordVoicings, ChordVoicing } from '../engine/chords';
 import { NOTE_NAMES, NOTE_NAMES_FLAT } from '../engine/notes';
 
+const NATURAL_KEYS: { label: string; pc: number }[] = [
+  { label: 'C', pc: 0 }, { label: 'D', pc: 2 }, { label: 'E', pc: 4 },
+  { label: 'F', pc: 5 }, { label: 'G', pc: 7 }, { label: 'A', pc: 9 },
+  { label: 'B', pc: 11 },
+];
+
+const ACCIDENTAL_SLOTS: ({ pc: number } | null)[] = [
+  { pc: 1 }, { pc: 3 }, null, { pc: 6 }, { pc: 8 }, { pc: 10 }, null,
+];
+
 export function ProgressionsScreen() {
   const { theme, useFlats, isDark } = useTheme();
   const [root, setRoot] = usePersistentState<number>('progressions.root', 0);
   // Each entry is a diatonic chord index; duplicates allowed
   const [progression, setProgression] = useState<number[]>([]);
+  const [naturalRowWidth, setNaturalRowWidth] = useState(0);
+  const slotWidth = naturalRowWidth > 0 ? naturalRowWidth / 7 : 0;
 
   const diatonicChords = useMemo(() => getDiatonicChords(root), [root]);
 
@@ -230,8 +242,64 @@ export function ProgressionsScreen() {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Progressions</Text>
         </View>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Diatonic Chords</Text>
-        <Text style={[styles.hint, { color: theme.textMuted }]}>These 7 chords all belong to the key of {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}. Tap any to add it to your progression.</Text>
+        {/* Piano key picker */}
+        <View style={[styles.keyCard, { backgroundColor: theme.bgSecondary, borderColor: theme.border }]}>
+          <View
+            style={styles.naturalsRow}
+            onLayout={(e) => setNaturalRowWidth(e.nativeEvent.layout.width)}
+          >
+            {NATURAL_KEYS.map(({ label, pc }) => (
+              <TouchableOpacity
+                key={pc}
+                testID={`key-natural-${pc}`}
+                style={[
+                  styles.keyChip,
+                  {
+                    backgroundColor: root === pc ? theme.accent : theme.bgTertiary,
+                    borderColor: root === pc ? theme.accent : theme.border,
+                  },
+                ]}
+                onPress={() => handleKeySelect(pc)}
+              >
+                <Text style={[styles.keyChipText, { color: root === pc ? '#fff' : theme.textPrimary }]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View
+            style={[
+              styles.accidentalsRow,
+              { marginLeft: slotWidth / 2, opacity: naturalRowWidth > 0 ? 1 : 0 },
+            ]}
+          >
+            {ACCIDENTAL_SLOTS.map((slot, i) =>
+              !slot ? (
+                <View key={`gap-${i}`} style={styles.keySlot} />
+              ) : (
+                <TouchableOpacity
+                  key={slot.pc}
+                  testID={`key-accidental-${slot.pc}`}
+                  style={[
+                    styles.keyChip,
+                    {
+                      backgroundColor: root === slot.pc ? theme.accent : theme.bgTertiary,
+                      borderColor: root === slot.pc ? theme.accent : theme.border,
+                    },
+                  ]}
+                  onPress={() => handleKeySelect(slot.pc)}
+                >
+                  <Text style={[styles.keyChipText, { color: root === slot.pc ? '#fff' : theme.textPrimary }]}>
+                    {(useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[slot.pc]}
+                  </Text>
+                </TouchableOpacity>
+              )
+            )}
+          </View>
+        </View>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>
+          {'Chords in key of ' + (useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[root]}
+        </Text>
         <View style={styles.numeralRow}>
           {diatonicChords.map((chord, index) => {
             const isActive = progression.includes(index);
@@ -384,5 +452,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     width: '100%',
+  },
+  keyCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 12,
+  },
+  naturalsRow: {
+    flexDirection: 'row',
+    gap: 3,
+    marginBottom: 3,
+  },
+  accidentalsRow: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  keySlot: {
+    flex: 1,
+  },
+  keyChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 7,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  keyChipText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

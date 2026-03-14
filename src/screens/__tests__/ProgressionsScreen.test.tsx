@@ -353,4 +353,65 @@ describe('ProgressionsScreen', () => {
     expect(progressionCards.length).toBe(3);
   });
 
+  // ── Piano key picker ──────────────────────────────────────────────────────
+
+  test('tapping a natural key chip updates root', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Tap F (pitch class 5)
+    const fChip = tree.root.findAll(
+      (el: any) => el.props.testID === 'key-natural-5'
+    )[0];
+    act(() => { fChip.props.onPress(); });
+
+    const json = JSON.stringify(tree.toJSON());
+    // F major diatonic label should now read "Chords in key of F"
+    expect(json).toContain('key of F');
+  });
+
+  test('tapping an accidental key chip updates root', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Tap F# (pitch class 6)
+    const fSharpChip = tree.root.findAll(
+      (el: any) => el.props.testID === 'key-accidental-6'
+    )[0];
+    act(() => { fSharpChip.props.onPress(); });
+
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('key of F#');
+  });
+
+  test('tapping a key chip resets the progression', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Add two chords to progression
+    const diatonicBtns = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.testID === 'diatonic-btn'
+    );
+    act(() => { diatonicBtns[0].props.onPress(); }); // I
+    act(() => { diatonicBtns[3].props.onPress(); }); // IV
+
+    // Verify 2 cards exist
+    const before = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.testID === 'progression-card'
+    );
+    expect(before.length).toBe(2);
+
+    // Tap G (pitch class 7) to change key
+    const gChip = tree.root.findAll(
+      (el: any) => el.props.testID === 'key-natural-7'
+    )[0];
+    act(() => { gChip.props.onPress(); });
+
+    // Progression should be empty
+    const after = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.testID === 'progression-card'
+    );
+    expect(after.length).toBe(0);
+  });
+
 });
