@@ -64,6 +64,12 @@ describe('ProgressionsScreen', () => {
       tree = create(<ProgressionsScreen />);
     });
 
+    // Expand the Circle of Fifths collapsible row first
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
+
     // CIRCLE_OF_FIFTHS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]
     // index 1 corresponds to note 7 = 'G'
     // Initially root=0 (C), so the G note is not active and C is.
@@ -108,6 +114,10 @@ describe('ProgressionsScreen', () => {
   test('circle of fifths fills diatonic notes with quality colors', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     // In C major: I/IV/V are Major (#c8962a), ii/iii/vi Minor (#3a7bd5), vii° Dim (#c0392b)
     expect(json).toContain('"fill":"#c8962a"');
@@ -118,6 +128,10 @@ describe('ProgressionsScreen', () => {
   test('circle of fifths shows roman numerals for diatonic notes', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     expect(json).toContain('vii°');
   });
@@ -125,6 +139,10 @@ describe('ProgressionsScreen', () => {
   test('selected key circle has white stroke ring', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     // The selected root note (C by default) gets stroke="#fff" strokeWidth=2
     expect(json).toContain('"stroke":"#fff"');
@@ -139,6 +157,12 @@ describe('ProgressionsScreen', () => {
     act(() => {
       tree = create(<ProgressionsScreen />);
     });
+
+    // Expand the Circle of Fifths collapsible row first
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
 
     // Helper: find the Text node whose sole child is 'I' (the first diatonic numeral).
     // The numeral Text has color=ACCENT when active, color=MUTED when inactive.
@@ -261,6 +285,10 @@ describe('ProgressionsScreen', () => {
   test('circle of fifths renders middle ring relative minor nodes', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     // In the key of C, the relative minor nodes should include 'Am', 'Em', 'Bm', etc.
     // Am is the relative minor of C (position 0 in CIRCLE_OF_FIFTHS).
@@ -270,6 +298,10 @@ describe('ProgressionsScreen', () => {
   test('circle of fifths renders inner ring diminished nodes', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     // Leading-tone dim for C major key (position 0): (0+11)%12=11 = B → B°
     expect(json).toContain('B°');
@@ -278,6 +310,10 @@ describe('ProgressionsScreen', () => {
   test('circle of fifths middle ring uses minor quality fill', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     // getChordQualityColor('Minor') returns '#3a7bd5'
     expect(json).toContain('"fill":"#3a7bd5"');
@@ -286,6 +322,10 @@ describe('ProgressionsScreen', () => {
   test('circle of fifths inner ring uses dim quality fill', () => {
     let tree: any;
     act(() => { tree = create(<ProgressionsScreen />); });
+    const circleHeader = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { circleHeader.props.onPress(); });
     const json = JSON.stringify(tree.toJSON());
     // getChordQualityColor('Dim') returns '#c0392b'
     expect(json).toContain('"fill":"#c0392b"');
