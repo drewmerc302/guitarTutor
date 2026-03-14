@@ -17,7 +17,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ErrorBoundary } from './src/components';
 
 if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
 const Tab = createBottomTabNavigator();

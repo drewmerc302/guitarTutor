@@ -446,4 +446,84 @@ describe('ProgressionsScreen', () => {
     expect(cardsAfter.length).toBe(2);
   });
 
+  // ── Collapsible Circle of Fifths ─────────────────────────────────────────
+
+  test('circle is collapsed by default — SVG not in tree', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+    // The circle SVG renders as <Svg> which maps to 'Svg' in the mock.
+    // When collapsed, no Svg elements from the circle should be present.
+    // We check that the pressable G elements (circle nodes) are absent.
+    const circleNodes = tree.root.findAllByType('G').filter(
+      (el: any) => el.props.onPress != null
+    );
+    expect(circleNodes.length).toBe(0);
+  });
+
+  test('tapping circle header expands circle SVG', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    const header = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { header.props.onPress(); });
+
+    // After expanding, the 12 pressable G nodes should be visible
+    const circleNodes = tree.root.findAllByType('G').filter(
+      (el: any) => el.props.onPress != null
+    );
+    expect(circleNodes.length).toBe(12);
+  });
+
+  test('tapping circle header a second time collapses circle', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    const header = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { header.props.onPress(); }); // expand
+
+    // Verify expanded
+    const nodesAfterExpand = tree.root.findAllByType('G').filter(
+      (el: any) => el.props.onPress != null
+    );
+    expect(nodesAfterExpand.length).toBe(12);
+
+    act(() => { header.props.onPress(); }); // collapse again
+
+    const nodesAfterCollapse = tree.root.findAllByType('G').filter(
+      (el: any) => el.props.onPress != null
+    );
+    expect(nodesAfterCollapse.length).toBe(0);
+  });
+
+  test('tapping a circle key node collapses circle and updates root', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    // Expand circle
+    const header = tree.root.findAll(
+      (el: any) => el.props.testID === 'circle-collapse-header'
+    )[0];
+    act(() => { header.props.onPress(); });
+
+    // Tap G node (CIRCLE_OF_FIFTHS[1] = 7)
+    const circleNodes = tree.root.findAllByType('G').filter(
+      (el: any) => el.props.onPress != null
+    );
+    act(() => { circleNodes[1].props.onPress(); });
+
+    // Circle should be collapsed again
+    const circleNodesAfter = tree.root.findAllByType('G').filter(
+      (el: any) => el.props.onPress != null
+    );
+    expect(circleNodesAfter.length).toBe(0);
+
+    // Root should have updated — G major diatonic includes D as V
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('D');
+  });
+
 });

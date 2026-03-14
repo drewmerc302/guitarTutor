@@ -425,7 +425,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   label: { fontSize: 12, fontWeight: '600', marginTop: 20, marginBottom: 6 },
-  hint: { fontSize: 12, marginBottom: 8 },
   numeralRow: {
     flexDirection: 'row',
     gap: 4,
