@@ -337,11 +337,7 @@ export function ProgressionsScreen() {
         </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Progression</Text>
-        <ScrollView
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.progressionRow}
-        >
+        <View style={styles.progressionRow}>
           {progression.map((chordIndex, pos) => {
             const chord = diatonicChords[chordIndex];
             const voicing = getVoicing(chord.root, chord.quality);
@@ -381,8 +377,7 @@ export function ProgressionsScreen() {
               {progression.length === 0 ? 'Tap a chord above' : 'Add more'}
             </Text>
           </View>
-        </ScrollView>
-
+        </View>
 
         <TouchableOpacity
           testID="circle-collapse-header"
@@ -449,6 +444,7 @@ const styles = StyleSheet.create({
   },
   progressionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   progressionCard: {
