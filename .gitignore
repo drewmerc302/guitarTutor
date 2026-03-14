@@ -49,3 +49,6 @@ yarn-error.*
 # internal development docs
 docs/superpowers/
 mockups/
+
+# visual brainstorming sessions
+.superpowers/
