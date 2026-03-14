@@ -27,14 +27,17 @@ export function ProgressionsScreen() {
   // Each entry is a diatonic chord index; duplicates allowed
   const [progression, setProgression] = useState<number[]>([]);
   const [naturalRowWidth, setNaturalRowWidth] = useState(0);
+  const [circleExpanded, setCircleExpanded] = useState(false);
   const slotWidth = naturalRowWidth > 0 ? naturalRowWidth / 7 : 0;
 
   const diatonicChords = useMemo(() => getDiatonicChords(root), [root]);
 
   // Called when the user taps a note on the Circle of Fifths to change the key
   const handleKeySelect = (note: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setRoot(note);
     setProgression([]);
+    setCircleExpanded(false);
   };
 
   // Always appends the chord index to the progression (allows duplicates)
@@ -45,6 +48,11 @@ export function ProgressionsScreen() {
   // Remove a chord at a specific position in the progression list
   const removeChordAtPos = (pos: number) => {
     setProgression(prev => prev.filter((_, i) => i !== pos));
+  };
+
+  const toggleCircle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setCircleExpanded(prev => !prev);
   };
 
   const getVoicing = (chordRoot: number, quality: string): ChordVoicing | null => {
@@ -376,11 +384,36 @@ export function ProgressionsScreen() {
         </ScrollView>
 
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Circle of Fifths</Text>
-        <Text style={[styles.hint, { color: theme.textMuted }]}>Tap the circle to change key</Text>
-        <View style={styles.circleContainer}>
-          {renderCircleOfFifths()}
-        </View>
+        <TouchableOpacity
+          testID="circle-collapse-header"
+          style={[styles.circleHeader, { backgroundColor: theme.bgSecondary, borderColor: theme.border }]}
+          onPress={toggleCircle}
+        >
+          <View style={styles.circleHeaderLeft}>
+            <Text style={[styles.circleHeaderIcon, { color: theme.accent }]}>●</Text>
+            <View>
+              <Text style={[styles.circleHeaderLabel, { color: theme.textPrimary }]}>
+                Circle of Fifths
+              </Text>
+              <Text style={[styles.circleHeaderSub, { color: theme.textMuted }]}>
+                Tap to explore key relationships
+              </Text>
+            </View>
+          </View>
+          <Text
+            style={[
+              styles.circleChevron,
+              { color: theme.textMuted, transform: [{ rotate: circleExpanded ? '90deg' : '0deg' }] },
+            ]}
+          >
+            ›
+          </Text>
+        </TouchableOpacity>
+        {circleExpanded && (
+          <View style={styles.circleContainer}>
+            {renderCircleOfFifths()}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -468,6 +501,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
     width: '100%',
   },
+  circleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  circleHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  circleHeaderIcon: { fontSize: 16 },
+  circleHeaderLabel: { fontSize: 14, fontWeight: '600' },
+  circleHeaderSub: { fontSize: 11, marginTop: 1 },
+  circleChevron: { fontSize: 20, fontWeight: '300' },
   keyCard: {
     borderRadius: 12,
     borderWidth: 1,
