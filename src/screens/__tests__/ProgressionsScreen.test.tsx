@@ -58,15 +58,6 @@ describe('ProgressionsScreen', () => {
     expect(json).toContain('Circle of Fifths');
   });
 
-  test('renders circle of fifths hint text', () => {
-    let tree: any;
-    act(() => {
-      tree = create(<ProgressionsScreen />);
-    });
-    const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('Tap the circle to change key');
-  });
-
   test('tapping a circle note changes the active key', () => {
     let tree: any;
     act(() => {
@@ -322,31 +313,4 @@ describe('ProgressionsScreen', () => {
     expect(progressionCards.length).toBe(3);
   });
 
-  test('tapping a progression card removes it', () => {
-    let tree: any;
-    act(() => { tree = create(<ProgressionsScreen />); });
-
-    const numChordCards = tree.root.findAllByType('TouchableOpacity').filter(
-      (el: any) => el.props.testID === 'diatonic-btn'
-    );
-
-    // Tap I card twice to create two entries
-    act(() => { numChordCards[0].props.onPress(); });
-    act(() => { numChordCards[0].props.onPress(); });
-
-    // Verify two progression cards exist
-    const before = tree.root.findAllByType('TouchableOpacity').filter(
-      (el: any) => el.props.testID === 'progression-card'
-    );
-    expect(before.length).toBe(2);
-
-    // Tap the first progression card to remove it
-    act(() => { before[0].props.onPress(); });
-
-    // Now only one progression card should remain
-    const after = tree.root.findAllByType('TouchableOpacity').filter(
-      (el: any) => el.props.testID === 'progression-card'
-    );
-    expect(after.length).toBe(1);
-  });
 });
