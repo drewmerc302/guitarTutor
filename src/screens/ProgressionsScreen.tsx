@@ -329,7 +329,11 @@ export function ProgressionsScreen() {
         </View>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Progression</Text>
-        <View style={styles.progressionRow}>
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.progressionRow}
+        >
           {progression.map((chordIndex, pos) => {
             const chord = diatonicChords[chordIndex];
             const voicing = getVoicing(chord.root, chord.quality);
@@ -339,15 +343,20 @@ export function ProgressionsScreen() {
               <TouchableOpacity
                 key={pos}
                 testID="progression-card"
-                onPress={() => removeChordAtPos(pos)}
                 style={[
                   styles.progressionCard,
-                  {
-                    backgroundColor: theme.bgSecondary,
-                    borderColor: theme.border,
-                  },
+                  { backgroundColor: theme.bgSecondary, borderColor: theme.border },
                 ]}
               >
+                <TouchableOpacity
+                  testID={`remove-chord-${pos}`}
+                  style={styles.removeBtn}
+                  hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                  accessibilityLabel={`Remove ${noteName}${qualitySuffix}`}
+                  onPress={() => removeChordAtPos(pos)}
+                >
+                  <Text style={[styles.removeBtnText, { color: theme.textMuted }]}>✕</Text>
+                </TouchableOpacity>
                 <Text style={[styles.progressionNumeral, { color: theme.textMuted }]}>
                   {chord.numeral}
                 </Text>
@@ -358,15 +367,13 @@ export function ProgressionsScreen() {
               </TouchableOpacity>
             );
           })}
-
-          {/* Placeholder: always shown at the end to hint that tapping a chord adds it */}
           <View style={[styles.progressionPlaceholder, { borderColor: theme.border }]}>
             <Text style={[styles.placeholderIcon, { color: theme.textMuted }]}>+</Text>
             <Text style={[styles.placeholderLabel, { color: theme.textMuted }]}>
-              {progression.length === 0 ? 'Tap a diatonic above' : 'Add more'}
+              {progression.length === 0 ? 'Tap a chord above' : 'Add more'}
             </Text>
           </View>
-        </View>
+        </ScrollView>
 
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Circle of Fifths</Text>
@@ -438,6 +445,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  removeBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+  },
+  removeBtnText: {
+    fontSize: 12,
+    fontWeight: '300',
   },
   progressionNumeral: {
     fontSize: 10,

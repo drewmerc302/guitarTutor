@@ -414,4 +414,36 @@ describe('ProgressionsScreen', () => {
     expect(after.length).toBe(0);
   });
 
+  test('✕ button removes chord at correct position', () => {
+    let tree: any;
+    act(() => { tree = create(<ProgressionsScreen />); });
+
+    const diatonicBtns = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.testID === 'diatonic-btn'
+    );
+
+    // Add I, IV, V (indices 0, 3, 4)
+    act(() => { diatonicBtns[0].props.onPress(); }); // I
+    act(() => { diatonicBtns[3].props.onPress(); }); // IV
+    act(() => { diatonicBtns[4].props.onPress(); }); // V
+
+    // Verify 3 cards
+    const cardsBefore = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.testID === 'progression-card'
+    );
+    expect(cardsBefore.length).toBe(3);
+
+    // Tap the ✕ on position 1 (IV)
+    const removeBtn = tree.root.findAll(
+      (el: any) => el.props.testID === 'remove-chord-1'
+    )[0];
+    act(() => { removeBtn.props.onPress(); });
+
+    // Should now have 2 cards
+    const cardsAfter = tree.root.findAllByType('TouchableOpacity').filter(
+      (el: any) => el.props.testID === 'progression-card'
+    );
+    expect(cardsAfter.length).toBe(2);
+  });
+
 });
