@@ -417,7 +417,6 @@ const styles = StyleSheet.create({
   },
   progressionRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
   progressionCard: {
